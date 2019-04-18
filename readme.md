@@ -20,15 +20,15 @@ Fri Apr 12 10:13:23 PDT 2019
 
 sdmsupport@lbl.gov
 ***/
-#############################################################
+
 ### SENSE Network Resource Manager (NRM)
 #### Requirements:
- # Apache 
+ * Apache 
         % sudo yum install httpd mod_ssl mod_wsgi
- # mod_wsgi 
- # Python 2.7 (or Anaconda 2)
- # FLASK 
- # RDFlib
+ * mod_wsgi 
+ * Python 2.7 (or Anaconda 2)
+ * FLASK 
+ * RDFlib
         % pip install flask_restful
         % pip install rdflib
 
