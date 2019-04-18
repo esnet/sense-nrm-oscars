@@ -1,4 +1,3 @@
-/***
 SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
 The Regents of the University of California, through Lawrence Berkeley
 National Laboratory (subject to receipt of any required approvals from
@@ -18,8 +17,8 @@ publicly and display publicly, and to permit other to do so.
 
 Fri Apr 12 10:13:23 PDT 2019
 
-sdmsupport@lbl.gov
-***/
+email: sdmsupport@lbl.gov
+
 
 ### SENSE Network Resource Manager (NRM)
 #### Requirements:
@@ -32,8 +31,8 @@ sdmsupport@lbl.gov
         % pip install flask_restful
         % pip install rdflib
 
-#### Bitbucket Git source
-https://bitbucket.org/berkeleylab/sensenrm-oscars/
+#### GitHub Repo
+https://github.com/esnet/sense-nrm-oscars
 
 #### Instruction Link
 https://sdm.lbl.gov/nrm/readme-nrm-server.html
