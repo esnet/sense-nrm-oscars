@@ -3,13 +3,13 @@ Email: sdmsupport@lbl.gov
 
 #### Requirements:
  * Apache 
-        % sudo yum install httpd mod_ssl mod_wsgi
+   $ sudo yum install httpd mod_ssl mod_wsgi
  * mod_wsgi 
  * Python 2.7 (or Anaconda 2)
  * FLASK 
  * RDFlib
-        % pip install flask_restful
-        % pip install rdflib
+   $ pip install flask_restful
+   $ pip install rdflib
 
 #### GitHub Repo
 https://github.com/esnet/sense-nrm-oscars
