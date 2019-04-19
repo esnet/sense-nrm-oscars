@@ -2,12 +2,12 @@
 Email: sdmsupport@lbl.gov
 
 #### Requirements:
-* Apache 
+* Apache <br/>
   %` sudo yum install httpd mod_ssl mod_wsgi `
 * mod_wsgi 
 * Python 2.7 (or Anaconda 2)
 * FLASK 
-* RDFlib
+* RDFlib <br/>
 `
   % pip install flask_restful
   % pip install rdflib 
