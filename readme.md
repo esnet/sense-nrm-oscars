@@ -1,5 +1,5 @@
 ### SENSE Network Resource Manager (NRM)
-Email: sdmsupport@lbl.gov
+  Email: sdmsupport@lbl.gov
 
 #### Requirements:
 * Apache <br/>
@@ -9,7 +9,7 @@ Email: sdmsupport@lbl.gov
 * FLASK 
 * RDFlib <br/>
 `
-  % pip install flask_restful
+  % pip install flask_restful <br/>
   % pip install rdflib 
 `
 
