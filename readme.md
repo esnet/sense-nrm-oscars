@@ -3,14 +3,13 @@
 
 #### Requirements:
 * Apache <br/>
-  %` sudo yum install httpd mod_ssl mod_wsgi `
+  `% sudo yum install httpd mod_ssl mod_wsgi `
 * mod_wsgi 
 * Python 2.7 (or Anaconda 2)
 * FLASK 
 * RDFlib <br/>
-`
-  % pip install flask_restful <br/>
-  % pip install rdflib 
+  `% pip install flask_restful` <br/>
+  `% pip install rdflib`
 `
 
 #### GitHub Repo
