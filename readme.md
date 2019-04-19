@@ -1,5 +1,5 @@
 ### SENSE Network Resource Manager (NRM)
-&nbsp;&nbsp;Email: sdmsupport@lbl.gov
+* Email: sdmsupport@lbl.gov
 
 #### Requirements:
 * Apache <br/>
