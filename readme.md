@@ -1,5 +1,5 @@
 ### SENSE Network Resource Manager (NRM)
-  Email: sdmsupport@lbl.gov
+&nbsp;&nbsp;Email: sdmsupport@lbl.gov
 
 #### Requirements:
 * Apache <br/>
@@ -10,7 +10,6 @@
 * RDFlib <br/>
   `% pip install flask_restful` <br/>
   `% pip install rdflib`
-`
 
 #### GitHub Repo
 https://github.com/esnet/sense-nrm-oscars
