@@ -31,10 +31,14 @@ SENSE NRM-OSCARS Client Command-line Tool
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         version info
+  -d, --debug           Debug flag. Default=False
   --capath CA_PATH      CA path. Default=/etc/grid-security/certificates
   --cert CERT_PATH      User certificate path. Must be paired with --key.
   --key KEY_PATH        User certificate key path. Must be paired with --cert.
-  --info                Collect service info. Default=False
+  -s NRMSERVICE_ENDPOINT, --service NRMSERVICE_ENDPOINT
+                        NRM service endpoint info. 
+                        e.g. dev-sense-nrm.es.net:443
+  --info                Collect service info over SSL. Default=False
   --sslinfo             Collect service info over SSL. Default=False
   --models              Get Models. Default=False
   --model MODELID       Get Model with model ID
@@ -110,6 +114,10 @@ versioninfo = "NRM client v1.0 on Apr 9, 2019"
 urllib3.disable_warnings(urllib3.exceptions.SubjectAltNameWarning)
 debug=False
 
+def myprint(s):
+    if (debug):
+        print(s)
+        
 def service_end_point():
     myept = "https://" + nrmservice_http
     return myept
@@ -170,7 +178,7 @@ def get_my_time():
 def getUUID():
     seed = "delta" + str(datetime.now(utc).strftime('%Y-%m-%dT%H:%M:%S'))
     deltas_uuid = uuid.uuid5(uuid.NAMESPACE_URL, seed)
-    #print("MY_UUID=", deltas_uuid, "\n\n")
+    #myprint("MY_UUID=" + deltas_uuid + "\n\n")
     return str(deltas_uuid)
 
 #### gzip and base64
@@ -240,27 +248,27 @@ def _surl(path):
 def get_info():
     rurl = service_end_point() + '/info'
     resp = requests.get(rurl)
-    print("NRM info status: " + str(resp.status_code))
+    myprint("NRM info status: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/info Error: {}'.format(resp.status_code))
-    print("NRM info response:" + str(resp._content)) 
+    print("NRM info response: " + str(resp._content)) 
     
 def get_sslinfo():
     rurl = service_end_point() + '/sslinfo'
     resp = requests.get(rurl, cert=mycerts, verify=capath)
-    print("NRM sslinfo status: " + str(resp.status_code))
+    myprint("NRM sslinfo status: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/sslinfo Error: {}'.format(resp.status_code))
     #print("heressl: " + str(resp.headers['content-type']))
-    print("NRM sslinfo response:" +str(resp._content))
+    print("NRM sslinfo response: " +str(resp._content))
 
 def get_models():
     myheaders = {'If-Modified-Since': time_rfc1123() }
     resp = requests.get(_surl('/models?current=true&summary=false&encode=false'), cert=mycerts, verify=capath)
-    print("NRM models status: " + str(resp.status_code))
+    myprint("NRM models status: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/models Error: {}'.format(resp.status_code))
-    print("NRM models result: " + str(resp.headers['content-type']))
+    myprint("NRM models result: " + str(resp.headers['content-type']))
     models=resp.json()
 
     sys.stdout = open('models-'+get_my_time()+'.txt', 'w')
@@ -268,15 +276,14 @@ def get_models():
     
 def get_model(model_id):
     resp = requests.get(_surl('/models/{:d}'.format(model_id)), cert=mycerts, verify=capath)
-    print("NRM model status: " + str(resp.status_code))
+    myprint("NRM model status: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/models/id Error {}'.format(resp.status_code))
-    print("NRM model result: " +str(resp.headers['content-type']))
+    myprint("NRM model result: " +str(resp.headers['content-type']))
 
     sys.stdout = open('model-'+get_my_time()+'.txt', 'w')
     dump(resp.json())
     
-
 def post_deltas_request(deltacontent, deltaid, reduction):
     if reduction: # delta reduction = cancel
         resp = requests.post(_surl('/deltas'), json={
@@ -295,70 +302,79 @@ def post_deltas_request(deltacontent, deltaid, reduction):
             'addition': deltacontent
             }, cert=mycerts, verify=capath)
             
-    print("NRM request deltas status: " + str(resp.status_code))
+    myprint("NRM request deltas status: " + str(resp.status_code))
     if resp.status_code != 201:
+        print('NRM request deltas non-successful response:')
         dump(resp.json())
         raise Exception('/deltas Error {}'.format(resp.status_code))
-    print("NRM request deltas response header: " + str(resp.headers['content-type']))
-    print("NRM request deltas response content: " + str(resp._content))
+    myprint("NRM request deltas response header: " + str(resp.headers['content-type']))
+    myprint("NRM request deltas response content: " + str(resp._content))
     print('NRM request deltas response:')
     print(json.dumps(resp.json(), indent = 4))
     
 def commit_delta(deltaid):
     resp = requests.put(_surl('/deltas/'+deltaid+'/actions/commit'), cert=mycerts, verify=capath)
-    print("NRM commit status: " + str(resp.status_code))
+    myprint("NRM commit status: " + str(resp.status_code))
     if resp.status_code != 200:
+        print('NRM commit non-successful response:')
         dump(resp.json())
         print('/deltas/actions/commit Error {}'.format(resp.status_code))
         return False
     print('NRM commit result : {}'.format(resp.json()["result"]))
-    print('NRM commit response:')
-    print(json.dumps(resp.json(), indent = 4))
+    myprint('NRM commit response:')
+    myprint(json.dumps(resp.json(), indent = 4))
     return True
     
 def status_delta(statusid):
     resp = requests.get(_surl('/deltas/'+statusid+'?summary=true'), cert=mycerts, verify=capath)
-    print("NRM summary status: " + str(resp.status_code))
+    myprint("NRM summary status: " + str(resp.status_code))
     if resp.status_code != 200:
+        print('NRM summary non-successful response:')
         dump(resp.json())
         raise Exception('Status Delta Error {}'.format(resp.status_code))
     print('NRM summary result: {}'.format(resp.json()["state"]))
-    print('NRM summary response:')
-    print(json.dumps(resp.json(), indent = 4))
+    myprint('NRM summary response:')
+    myprint(json.dumps(resp.json(), indent = 4))
+    return True
     
 def clear_hold(deltaid):
     resp = requests.put(_surl('/deltas/'+deltaid+'/actions/clear'), cert=mycerts, verify=capath)
-    print("NRM clear status: " + str(resp.status_code))
+    myprint("NRM clear status: " + str(resp.status_code))
     if resp.status_code != 200:
+        print('NRM clear non-successful response:')
         dump(resp.json())
         print('/deltas/actions/clear Error {}'.format(resp.status_code))
         return False
     print('NRM clear result: {}'.format(resp.json()["result"]))
-    print('NRM clear response:')
-    print(json.dumps(resp.json(), indent = 4))
+    myprint('NRM clear response:')
+    myprint(json.dumps(resp.json(), indent = 4))
     return True
 
 def cancel_delta(deltaid):
     resp = requests.put(_surl('/deltas/'+deltaid+'/actions/cancel'), cert=mycerts, verify=capath)
-    print("NRM cancel status: " + str(resp.status_code))
+    myprint("NRM cancel status: " + str(resp.status_code))
     if resp.status_code != 200:
+        print('NRM cancel non-successful response:')
         dump(resp.json())
         raise Exception('/deltas/actions/cancel Error {}'.format(resp.status_code))
     print('NRM cancel result: {}'.format(resp.json()["result"]))
-    print('NRM cancel response:')
-    print(json.dumps(resp.json(), indent = 4))
+    myprint('NRM cancel response:')
+    myprint(json.dumps(resp.json(), indent = 4))
+    return True
 
 def delete_model(model_id):
     print("NRM delete model ID: " + str(model_id))
     resp = requests.delete(_surl('/models/{:d}'.format(model_id)), cert=mycerts, verify=capath)
-    print("NRM delete model  status: " + str(resp.status_code))
+    myprint("NRM delete model  status: " + str(resp.status_code))
     if resp.status_code != 200:
+        print('NRM delete non-successful response:')
         dump(resp.json())
         raise Exception('/models/id via delete Error {}'.format(resp.status_code))
     print('NRM delete model result: {}'.format(resp.json()["result"]))
-    print('NRM delete model response:')
-    print(json.dumps(resp.json(), indent = 4))
-    print("NRM delete model DONE")
+    myprint('NRM delete model response:')
+    myprint(json.dumps(resp.json(), indent = 4))
+    myprint("NRM delete model DONE")
+    return True
 
 def read_delta(inputfile):
     if not os.path.isfile(inputfile):
@@ -418,19 +434,23 @@ def compose_delta(swithes, ports, bandwidth, duration, urnprefix, deltaid):
 def get_active_requests():
     rurl = service_end_point() + '/sense-rm/api/protected/alldeltas'
     resp = requests.get(rurl, cert=mycerts, verify=capath)
-    print("NRM collect all active requests: " + str(resp.status_code))
+    myprint("NRM collect all active requests: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/protercted/requests/active Error: {}'.format(resp.status_code))
-    print("NRM collect all active requests response:" + str(resp._content))
+    myprint("NRM collect all active requests response:" + str(resp._content))
+    print('NRM collect all response:')
+    print(json.dumps(resp.json(), indent = 4))
     
 def cancel_all_requests():
     rurl = service_end_point() + '/sense-rm/api/protected/cancelall'
     resp = requests.put(rurl, cert=mycerts, verify=capath)
-    print("NRM cancel all active requests: " + str(resp.status_code))
+    myprint("NRM cancel all active requests: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/protercted/requests/active Error: {}'.format(resp.status_code))
-    print("NRM cancel all active requests response:" + str(resp._content))
-
+    myprint("NRM cancel all active requests response:" + str(resp._content))
+    print('NRM cancel all response:')
+    print(json.dumps(resp.json(), indent = 4))
+    
 ##############################
 inputfile = ""
 nrminfo = False
@@ -554,97 +574,90 @@ if args.duration: # in hours
 
 ##############################
 if (nrminfo):
-    print("NRM SSL info")
+    myprint("NRM SSL info")
     get_sslinfo()
-    print('NRM SSL info DONE')
+    myprint('NRM SSL info DONE')
 
 if (nrmsslinfo):
-    print("NRM sslinfo")
+    myprint("NRM sslinfo")
     get_sslinfo()
-    print('NRM sslinfo DONE')
+    myprint('NRM sslinfo DONE')
 
 ## Models
 if (getmodels):
-    print("NRM models")
+    myprint("NRM models")
     get_models()
-    print('NRM models DONE')
+    myprint('NRM models DONE')
 
 if (getmodelid is not None):
-    print("NRM model")
+    myprint("NRM model")
     get_model(getmodelid)
-    print('NRM model DONE')
+    myprint('NRM model DONE')
 
 # Request Delta
 if (postdeltasa):
     deltaid = getUUID()
-    print("NRM Request deltas ID: " + str(deltaid) + "\n\n")
+    print("NRM Request deltas ID: " + str(deltaid))
     delta_content = ""
     if (args.inputfile):
         delta_content = read_delta(inputfile)
     else:
         delta_content = compose_delta(switches, ports, bandwidth, duration, urnprefix, deltaid)
     
-    print("NRM Request deltas")
+    myprint("NRM Request deltas")
     post_deltas_request(delta_content, deltaid, reduction)
-    #print("NRM deltas status: " + str(resp.status_code))
-    #if resp.status_code != 201:
-    #    dump(resp.json())
-    #    raise Exception('/deltas Error {}'.format(resp.status_code))
-    #print("NRM deltas response header: " + str(resp.headers['content-type']))
-    #print("NRM deltas response content: " + str(resp._content))
-    #print('NRM deltas output:')
-    #print(json.dumps(resp.json(), indent = 4))
-    print('NRM Request deltas DONE')
+    print("\nNRM Request ID: " + str(deltaid) + "\n\n")
+    myprint('NRM Request deltas DONE')
 
 # Commit
 if (commitid):
-    print("NRM commit ID: " + str(commitid))
+    myprint("NRM commit ID: " + str(commitid))
     commit_delta(commitid)
-    print('NRM commit DONE')
+    myprint('NRM commit DONE')
 
 # Status
 if (statusid):
-    print("NRM summary ID: " + str(statusid))
+    myprint("NRM summary ID: " + str(statusid))
     status_delta(statusid)
-    print('NRM summary DONE')
+    myprint('NRM summary DONE')
 
 # Clear
 if (clearid):
-    print("NRM clear ID: " + str(clearid))
+    myprint("NRM clear ID: " + str(clearid))
     clear_hold(clearid)
-    print('NRM clear DONE')
+    myprint('NRM clear DONE')
 
 # Cancel
 if (cancelid):
-    print("NRM cancel ID: " + str(cancelid))
+    myprint("NRM cancel ID: " + str(cancelid))
     cancel_delta(cancelid)
-    print('NRM cancel DONE')
+    myprint('NRM cancel DONE')
 
 ### Request Submit and Commit
 if (submit_commit):
     print("NRM Request Submit and Commit: " + str(service_end_point()))
-    print("\t Service prefix: " + urnprefix)
-    print("\t" + str(get_my_time()))
-    print("\n\n")
-    print("############################################")
-    print("NRM SSLINFO")
-    get_sslinfo()
-    print("\n\n")
+    myprint("\t Service prefix: " + urnprefix)
+    myprint("\t" + str(get_my_time()))
+    myprint("\n")
+    myprint("############################################")
+    myprint("NRM SSLINFO")
+    if (debug): get_sslinfo()
+    myprint("\n")
 
     print("############################################")
     myuuid = getUUID()
     print("NRM RequestID: " + str(myuuid))
-    print("\n\n")
+    print("\n")
     
-    print("############################################")
+    myprint("############################################")
     print("NRM Request")
     delta_content = ""
     if (args.inputfile):
         delta_content = read_delta(inputfile)
     else:
-        delta_content = compose_delta(switches, ports, bandwidth, duration, urnprefix, deltaid)
-    post_deltas_addition(inputfile, myuuid)
-    print("\n\n")
+        delta_content = compose_delta(switches, ports, bandwidth, duration, urnprefix, myuuid)
+    post_deltas_request(delta_content, myuuid, reduction)
+    print("\n")
 
     print("############################################")
     print("NRM Request COMMIT")
@@ -655,81 +668,80 @@ if (submit_commit):
         if not clear_result:
             print('NRM Request CLEAR ERROR')
         print('NRM Request CLEAR DONE after Commmit Error')
-    print("\n\n")
+    print("\n")
 
     print("############################################")
     print("NRM Request SUMMARY")
     status_delta(myuuid)
-    print("\n\n")
+    print("NRM RequestID: " + str(myuuid))
+    print("\n")    
 
 ### Request Terminate
 if (releaseid):
     print("NRM Request Release and Terminate: " + service_end_point())
-    print("\t Service prefix: " + urnprefix)
-    print("\t" + str(get_my_time()))
-    print("\n\n")
-    print("############################################")
-    print("NRM SSLINFO")
-    get_sslinfo()
-    print("\n\n")
+    myprint("\t Service prefix: " + urnprefix)
+    myprint("\t" + str(get_my_time()))
+    myprint("\n")
+    myprint("############################################")
+    myprint("NRM SSLINFO")
+    if (debug): get_sslinfo()
+    myprint("\n\n")
 
     print("############################################")
     print("NRM Request CANCEL ID: " + str(releaseid))
     cancel_delta(cancelid)
-    print("\n\n")
+    print("\n")
     
     print("############################################")
     print("NRM Request SUMMARY")
     status_delta(myuuid)
-    print("\n\n")
+    print("\n")
     
-    print('NRM Request Release and Terminate DONE')
+    myprint('NRM Request Release and Terminate DONE')
 
 ######################################################################
 # Adminisgrative functions
 ### Collect all active request IDs that belong to me
 if (collectall):
-    print("NRM collect all active request IDs")
+    myprint("NRM collect all active request IDs")
     get_active_requests()
-    print('NRM collect all DONE')
+    myprint('NRM collect all DONE')
 
 ### Cancel all active requests that belong to me
 if (cancelall):
-    print("NRM cancel all active requests")
+    myprint("NRM cancel all active requests")
     cancel_all_requests()
-    print('NRM cancel all DONE')
+    myprint('NRM cancel all DONE')
 
 ### Testing all interfaces sequentially
 if (testall):
     print("NRM Service Testing: " +str(service_end_point()))
-    print("\t Service prefix: " + urnprefix)
-    print("\t" + str(get_my_time()))
-    print("\n\n")
-    print("############################################")
-    print("NRM_test INFO: " + service_end_point() + "/info" )
-    get_info()
-    print("\n\n")
-
-    print("############################################")
-    print("NRM_test SSLINFO: " + service_end_point() + "/sslinfo")
-    get_sslinfo()
-    print("\n\n")
+    myprint("\t Service prefix: " + urnprefix)
+    myprint("\t" + str(get_my_time()))
+    myprint("\n")
+    myprint("############################################")
+    myprint("NRM_test SSLINFO: " + service_end_point() + "/sslinfo")
+    if (debug): get_sslinfo()
+    myprint("\n")
 
     print("############################################")
     print("NRM_test MODELS: " + _surl('/models?current=true&summary=false&encode=false'))
-    get_models()
+    try:
+        get_models()
+    except Exception as e:
+        if (debug): print "MODELs Error EXCEPT: ", e
     #if resp.status_code != 200:
     #    print("MODEL_FAILED: " + str(resp.status_code))
     #else:
     #    print("MODEL_HEADER: ", str(resp.headers['content-type']))
     #    models=resp.json()
     #    dump(resp.json())
-    print("\n\n")
+    print("\n")
 
     print("############################################")
     myuuid = getUUID()
-    print("NRM_test DELTA_ID: " + str(myuuid))
-    print("\n\n")
+    print("NRM_test REQUEST DELTA ID: " + str(myuuid))
+    print("\n")
     
     print("############################################")
     print("NRM_test DELTAS: " + _surl('/deltas'))
@@ -737,9 +749,9 @@ if (testall):
     if (args.inputfile):
         delta_content = read_delta(inputfile)
     else:
-        delta_content = compose_delta(switches, ports, bandwidth, duration, urnprefix, deltaid)
-    post_deltas_addition(inputfile, myuuid)
-    print("\n\n")
+        delta_content = compose_delta(switches, ports, bandwidth, duration, urnprefix, myuuid)
+    post_deltas_request(delta_content, myuuid, reduction)
+    print("\n")
 
     print("############################################")
     print("NRM_test COMMIT: " + str(_surl('/deltas/'+myuuid+'/actions/commit')))
@@ -750,19 +762,20 @@ if (testall):
         if not clear_result:
             print('NRM_test CLEAR_ERROR')
         print('NRM_test CLEAR_DONE_with_COMMIT_ERROR')
-    print("\n\n")
+    print("\n")
 
     print("############################################")
     print("NRM_test SUMMARY: " + _surl('/deltas/'+myuuid+'?summary=true'))
     status_delta(myuuid)
-    print("\n\n")
+    print("\n")
 
     print("############################################")
     if commit_result:
         print("NRM_test CANCEL: " + _surl('/deltas/'+myuuid+'/actions/cancel'))
         cancel_delta(myuuid)
-        print("\n\n")
-        
+        print("\n")
+    
+    print("NRM_test REQUEST ID: " + str(myuuid))
     print('NRM_test ALL_TEST DONE')
 
     #print("############################################")
