@@ -582,16 +582,28 @@ def is_delta_active(s, did, checkInactive):
         if (nrm_config["debug"]>6): print "DB::delta_search:ACT", did,"=",activestatus
     return activestatus
 
-def get_all_active_deltas(s):
+def get_all_active_deltas(s, uid):
     allDeltas = s.query(oDelta).all()
     allids = ""
+    myids = ""
     if len(allDeltas) > 0:
-        for f in allDeltas:
-            allids = allids + f.id
-            if allDeltas.index(f) != len(allDeltas)-1:
-                allids = allids + ','
-    if (nrm_config["debug"]>6): print "DB::all_active_deltas=", allids
-    return allids
+        isadmin = is_admin(s, uid)
+        if isadmin:
+            for f in allDeltas:
+                allids = allids + f.id
+                if allDeltas.index(f) != len(allDeltas)-1:
+                    allids = allids + ','
+            if (nrm_config["debug"]>6): print "DB::all_active_deltas_admin=", allids
+            return allids
+        else:
+            for f in allDeltas:
+                if (f.id == uid):
+                    myids = myids + f.id
+                    if allDeltas.index(f) != len(allDeltas)-1:
+                        myids = myids + ','
+            if (nrm_config["debug"]>6): print "DB::all_active_deltas_user=", myids
+            return myids
+    return myids
 
 
 def insert_delta_value(s, id, key, value):

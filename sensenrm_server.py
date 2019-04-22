@@ -340,9 +340,9 @@ class AllDeltasAPI(Resource):
             print "SVC: ALL_DELTAS GET: ", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
-            isadmin = sensenrm_db.is_admin(s, udn)
-            if isadmin:
-                alldeltas = sensenrm_db.get_all_active_deltas(s)
+            isauthz = sensenrm_db.validate_user(s, udn)
+            if isauthz:
+                alldeltas = sensenrm_db.get_all_active_deltas(s, udn)
                 rstatus = 200
                 return {'deltas': str(alldeltas)}, rstatus
             else:
