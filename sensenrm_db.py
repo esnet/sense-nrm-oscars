@@ -515,7 +515,7 @@ def remove_expired_deltas(s):
                 #print "DB: IS_EXPIRED_DELTAID=", f.id
                 #print "DB: IS_EXPIRED_ENDTIME=", f.time_end
                 #print "DB: IS_EXPIRED_DIFFTIME=",tdiff
-            if (tdiff > 0): # expired
+            if (tdiff < 0): # expired
                 if (nrm_config["debug"]>3):
                     print "DB: IS_EXPIRED_REMOVE=", f.id
                     print "DB: IS_EXPIRED_ENDTIME=", f.time_end
@@ -541,7 +541,7 @@ def remove_expired_delta(s, did):
             #print "DB: IS2_EXPIRED_DELTAID=", mObj.id
             #print "DB: IS2_EXPIRED_ENDTIME=", time_to_compare
             #print "DB: IS2_EXPIRED_DIFFTIME=",tdiff
-        if (tdiff > 0): # expired
+        if (tdiff < 0): # expired
             if (nrm_config["debug"]>3):
                 print "DB: IS2_EXPIRED_REMOVE=", mObj.id
                 print "DB: IS2_EXPIRED_ENDTIME=", time_to_compare
