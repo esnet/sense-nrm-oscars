@@ -511,6 +511,8 @@ class nrmDelta(object):
                             else:
                                 delta_avlan=d_avlan
                 
+            if (len(list_switches) < 1):
+                raise Exception('DELTA: ADDITION: NO SWITCHES FOUND.')
             if (len(starttime) == 0):
                 starttime = str(self.time_iso8601(self.get_delayed_time_5min()))
                 if (nrm_config["debug"]>3): print "DELTA: STARTTIME=", starttime
