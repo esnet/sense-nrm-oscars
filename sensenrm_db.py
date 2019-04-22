@@ -321,8 +321,8 @@ def create_userslist(s):
         #print("line="+line1)
         parsed1 = line1.split('"')
         if (nrm_config["debug"]>0): 
-            print "USER_INSERT: " + parsed1[1] + " = " + parsed1[2]
-        insert_user(s, parsed1[1], parsed1[2], "user", 1)
+            print "USER_INSERT: " + parsed1[1] + "=" + parsed1[2].strip() + "="
+        insert_user(s, parsed1[1], parsed1[2].strip(), "user", 1)
         line1 = fi.readline()
     if (nrm_config["debug"]>0): print "Created USER_LIST successfully"
 
