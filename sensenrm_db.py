@@ -597,7 +597,7 @@ def get_all_active_deltas(s, uid):
             return allids
         else:
             for f in allDeltas:
-                if (f.id == uid):
+                if (f.userid == uid):
                     myids = myids + f.id
                     if allDeltas.index(f) != len(allDeltas)-1:
                         myids = myids + ','
