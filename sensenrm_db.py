@@ -499,7 +499,7 @@ def convert_str_to_datetime(mystr):
 # t1= 2019-01-09 01:05:28.958184+00:00
 # t1-tx= 183.931184
 def get_time_diff(time_to_compare, current_time): 
-    td = current_time - convert_str_to_datetime(time_to_compare)
+    td = convert_str_to_datetime(time_to_compare) - current_time
     return td.total_seconds()
 
 def remove_expired_deltas(s):
@@ -517,6 +517,7 @@ def remove_expired_deltas(s):
                 #print "DB: IS_EXPIRED_DIFFTIME=",tdiff
             if (tdiff < 0): # expired
                 if (nrm_config["debug"]>3):
+                    print "DB: IS_EXPIRED_TDIFF=", tdiff
                     print "DB: IS_EXPIRED_REMOVE=", f.id
                     print "DB: IS_EXPIRED_ENDTIME=", f.time_end
                 insert_idelta_remove_delta(s, f.id, False)
@@ -543,6 +544,7 @@ def remove_expired_delta(s, did):
             #print "DB: IS2_EXPIRED_DIFFTIME=",tdiff
         if (tdiff < 0): # expired
             if (nrm_config["debug"]>3):
+                print "DB: IS2_EXPIRED_TDIFF=", tdiff
                 print "DB: IS2_EXPIRED_REMOVE=", mObj.id
                 print "DB: IS2_EXPIRED_ENDTIME=", time_to_compare
             insert_idelta_remove_delta(s, mObj.id, False)
