@@ -472,9 +472,9 @@ def insert_idelta_remove_delta(s, did, cancelled):
             if (nrm_config["debug"]>6): print "DB: inactive delta exists=", did
             #timenow = datetime.utcnow()
             timenow = str(datetime.now(utc))
-            heldhistory = miObj.heldhisory + "," + mObj.heldid
+            heldhistory = miObj.held_hisory + "," + mObj.heldid
             miObj.held_history = heldhistory
-            timehistory = miObj.heldhisory + "," + mObj.time_begin + ":" + mObj.time_end
+            timehistory = miObj.time_hisory + "," + mObj.time_begin + ":" + mObj.time_end
             miObj.time_history = timehistory
             s.add(miObj)
         # Cancel equivalent

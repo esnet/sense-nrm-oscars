@@ -681,6 +681,8 @@ class nrm_oscars_connection(object):
             }, verify=False)
         if (nrm_config["debug"]>8): print "OSCARS: GetToken DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): 
+                print "OSCARS: Token FAILED:", resp._content
             raise Exception('OSCARS: Cannot GetToken: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
             print "OSCARS: Token_UID: ", uid
@@ -693,6 +695,8 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>8): 
             print "OSCARS: SSLinfo DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): 
+                print "OSCARS: SSLinfo FAILED:", resp._content
             raise Exception('OSCARS: Cannot get_SSLinfo: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
             #print "OSCARS: SSLinfo: ", resp.headers['content-type']
@@ -705,6 +709,8 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>8): 
             print "OSCARS: Info DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): 
+                print "OSCARS: Info FAILED:", resp._content
             raise Exception('OSCARS: Cannot get_info: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
             print "OSCARS: Info:", resp._content
@@ -720,6 +726,8 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>8): 
             print "OSCARS: Protected_SSL DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): 
+                print "OSCARS: Protected_SSL FAILED:", resp._content
             raise Exception('OSCARS: Cannot get_protected_info: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
             print "OSCARS: Protected_SSL:", resp._content
@@ -751,6 +759,8 @@ class nrm_oscars_connection(object):
             print "OSCARS: GET_MODEL_DONE: ", resp.status_code
             # print "HERE_TOPO"
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): 
+                print "OSCARS: MODEL_AVAIL FAILED: ", resp._content
             raise Exception('OSCARS: Cannot get_avail_topo: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
             print "OSCARS: MODEL_AVAIL :\n", resp._content
@@ -774,6 +784,8 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>8):
             print "OSCARS: GET_RESERVED_LIST_DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3):
+                print "OSCARS: ReservedList FAILED: ", resp._content
             raise Exception('OSCARS Cannot get ReservedList: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6):
             print "OSCARS: ReservedList:\n", resp._content
@@ -790,6 +802,8 @@ class nrm_oscars_connection(object):
                             verify=False, headers=myheaders)
         if (nrm_config["debug"]>8): print "OSCARS: ConnID DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): 
+                print "OSCARS: ConnID FAILED: ", resp._content
             raise Exception('OSCARS: Cannot GetConnID : {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): 
             print "OSCARS: ConnID: ", resp._content
@@ -814,6 +828,7 @@ class nrm_oscars_connection(object):
             }, verify=False)
         if (nrm_config["debug"]>8): print "OSCARS: Path_Computation DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): print "OSCARS: Path_Computation FAILED: ", resp._content
             raise Exception('OSCARS: Cannot get_PCE : {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): print "OSCARS: Path_Computation: ", resp._content
         ## convert response to formatted output, eventually to SENSE API format
@@ -871,6 +886,7 @@ class nrm_oscars_connection(object):
             verify=False, headers=myheaders)
         if (nrm_config["debug"]>8): print "OSCARS: CLEAR DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): print "OSCARS: CLEAR FAILED: ", resp._content
             raise Exception('OSCARS Cannot CLEAR: {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): print "OSCARS: CLEAR: ", resp._content
         return resp.status_code, resp._content
@@ -887,6 +903,7 @@ class nrm_oscars_connection(object):
             connid, verify=False, headers=myheaders)
         if (nrm_config["debug"]>8): print "OSCARS: COMMIT DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): print "OSCARS: COMMIT FAILED: ", resp._content
             raise Exception('OSCARS Cannot COMMIT: {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): print "OSCARS: COMMIT: ", resp._content
         return resp.status_code, resp._content
@@ -903,6 +920,7 @@ class nrm_oscars_connection(object):
             }, verify=False, headers=myheaders)
         if (nrm_config["debug"]>8): print "OSCARS: UNCOMMIT DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): print "OSCARS: UNCOMMIT FAILED: ", resp._content
             raise Exception('OSCARS:Cannot UNCOMMIT : {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): print "OSCARS: UNCOMMIT: ", resp._content
         return resp.status_code, resp._content
@@ -920,6 +938,7 @@ class nrm_oscars_connection(object):
             connid, verify=False, headers=myheaders)
         if (nrm_config["debug"]>8): print "OSCARS: CANCEL DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): print "OSCARS: CANCEL FAILED: ", resp._content
             raise Exception('OSCARS Cannot CANCEL: {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): print "OSCARS: CANCEL: ", resp._content
         return resp.status_code, resp._content
@@ -929,6 +948,7 @@ class nrm_oscars_connection(object):
         resp = requests.get(self._surl('/api/conn/info/'+connid), verify=False)
         if (nrm_config["debug"]>8): print "OSCARS: STATUS_DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): print "OSCARS: STATUS FAILED: ", resp._content
             raise Exception('OSCARS Cannot get STATUS: {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): print "OSCARS: STATUS:", resp._content
         return resp
@@ -1111,6 +1131,7 @@ class nrm_oscars_connection(object):
         # response is when your hold expires before that you will need to do a commit
         if (nrm_config["debug"]>8): print "OSCARS: HELD DONE: ", resp.status_code
         if resp.status_code != 200:
+            if (nrm_config["debug"]>3): print "OSCARS: HELD FAILED: ", resp._content
             raise Exception('OSCARS Cannot HELD: {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): print "OSCARS: HELD: ", resp._content
 
