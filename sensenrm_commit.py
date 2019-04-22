@@ -87,12 +87,12 @@ class nrmCommit(object):
                 gid = sensenrm_db.get_user_group(s,uid)
                 try:
                     status, resp = oscars_conn.get_commit(delta.heldid, gid)
+                    if (nrm_config["debug"]>0):
+                        print "COMMIT_STATUS=", status
+                        print "COMMIT_RESP=", resp
                 except Exception as e:
                     if (nrm_config["debug"]>0): print "COMMIT EXCEPT: ", e
                     status = 600
-                if (nrm_config["debug"]>0):
-                    print "COMMIT_STATUS=", status
-                    print "COMMIT_RESP=", resp
                 if status == 200:
                     sensenrm_db.insert_delta_value(s, nrm_deltaid, "status", "COMMITTED")
                     sensenrm_db.update_switch(s, nrm_deltaid, 1)
