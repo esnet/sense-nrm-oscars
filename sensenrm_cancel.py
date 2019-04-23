@@ -97,6 +97,7 @@ class nrmCancel(object):
                 except Exception as e:
                     if (nrm_config["debug"]>0): print "CANCEL EXCEPT: ", e
                     status = 600
+                    resp = "CANCEL_OSCARS_EXCEPTION: " + str(status)
                 did = delta.id
 
                 if status == 400:
@@ -120,8 +121,9 @@ class nrmCancel(object):
                     print "CANCEL_UNAUTHORIZED_USER: ", uid
                 resp = "UNAUTHORIZED_USER:" + str(uid)
                 status = 403
+            return status, resp
 
-        return status, resp
+        return 201, ""
     
     def cancelall(self, uid):
         # status, resp = nrmcancel.cancelall(udn)
