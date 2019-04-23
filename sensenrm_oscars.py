@@ -166,10 +166,10 @@ def get_unixtime_from_deltatime(date_with_tz):
     date_str, tz = date_with_tz[:-5], date_with_tz[-5:]
     dt_utc = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f")
     dt = dt_utc.replace(tzinfo=FixedOffset(tz))
-    if (nrm_config["debug"]>8): 
+    if (nrm_config["debug"]>9): 
         print "OSCARS: datetime=", dt
     myutime1 = get_unixtime_from_datetime(dt)
-    if (nrm_config["debug"]>8):
+    if (nrm_config["debug"]>9):
         print "OSCARS: unixtime=", myutime1
     return myutime1
 
@@ -364,12 +364,12 @@ class nrm_junction(object):
     def findkeyvaluedict(self, keystr):
         for keyv in keystr:
             value = keystr[keyv]
-            if (nrm_config["debug"]>8): print "KD=", keyv
+            if (nrm_config["debug"]>9): print "KD=", keyv
             self.assign(keyv, value)
             
     def findkeyvaluelist(self, keystr):
         if (len(keystr) == 0) :
-            if (nrm_config["debug"]>8): print "VL=0"
+            if (nrm_config["debug"]>9): print "VL=0"
         else :
             keystri = iter(keystr)
             for value in keystri:
@@ -378,44 +378,44 @@ class nrm_junction(object):
                 elif (type(value) is list):
                     self.findkeyvaluelist(value)
                 else:
-                    if (nrm_config["debug"]>8): print "VL=", value
+                    if (nrm_config["debug"]>9): print "VL=", value
 
     def assign(self, key, value):
         def vlans():
-            if (nrm_config["debug"]>8): print "#vlanRanges=", value
+            if (nrm_config["debug"]>9): print "#vlanRanges=", value
             self.findkeyvaluelist(value)
         def floor():
-            if (nrm_config["debug"]>8): print "#floor=", value
+            if (nrm_config["debug"]>9): print "#floor=", value
             self.vlanr.floor = value
             if (self.vlanr.floor is 0):
-                if (nrm_config["debug"]>8): print "##floor=ZERO?"
+                if (nrm_config["debug"]>9): print "##floor=ZERO?"
             else:
                 if (self.vlanr.ceiling is not 0):
                     self.vlanRanges.append(self.vlanr)
                     self.vlanr = nrm_vlanRange()
-                    if (nrm_config["debug"]>8): print "##floor=", self.vlanr.floor
+                    if (nrm_config["debug"]>9): print "##floor=", self.vlanr.floor
                 else:
-                    if (nrm_config["debug"]>8): print "##floor_ceiling=HUH?"
+                    if (nrm_config["debug"]>9): print "##floor_ceiling=HUH?"
         def ceiling():
-            if (nrm_config["debug"]>8): print "#ceiling=", value
+            if (nrm_config["debug"]>9): print "#ceiling=", value
             self.vlanr.ceiling = value
             if (self.vlanr.ceiling is 0): 
-                if (nrm_config["debug"]>8): print "##ceiling=ZERO?"
+                if (nrm_config["debug"]>9): print "##ceiling=ZERO?"
             else:
                 if (self.vlanr.floor is not 0):
                     self.vlanRanges.append(self.vlanr)
                     self.vlanr = nrm_vlanRange()
-                    if (nrm_config["debug"]>8): print "##ceiling", self.vlanr.ceiling
+                    if (nrm_config["debug"]>9): print "##ceiling", self.vlanr.ceiling
                 else:
-                    if (nrm_config["debug"]>8): print "##ceiling_floor=ZERO"
+                    if (nrm_config["debug"]>9): print "##ceiling_floor=ZERO"
         def vlanExpression():
-            if (nrm_config["debug"]>8): print "#vlanExpression", value
+            if (nrm_config["debug"]>9): print "#vlanExpression", value
             self.vlanExpression = value
         def ingressBandwidth():
-            if (nrm_config["debug"]>8): print "#ingressBandwidth", value
+            if (nrm_config["debug"]>9): print "#ingressBandwidth", value
             self.ingressBandwidth = value
         def egressBandwidth():
-            if (nrm_config["debug"]>8): print "#egressBandwidth", value
+            if (nrm_config["debug"]>9): print "#egressBandwidth", value
             self.egressBandwidth = value
         
         options = {"vlanRanges" : vlans,
@@ -429,7 +429,7 @@ class nrm_junction(object):
         if options.has_key(key):
             options[key]()
         else:
-            if (nrm_config["debug"]>8): printf("OSCARS: JUNCTION assign NONE\n");
+            if (nrm_config["debug"]>9): printf("OSCARS: JUNCTION assign NONE\n");
         
     def indented_show(self):
         def pvlans(vlanrs):
@@ -506,25 +506,25 @@ class nrm_pce(object):
     
     def assign(self, key, value):
         def azEro():
-            if (nrm_config["debug"]>8): print "#azEro=", value
+            if (nrm_config["debug"]>9): print "#azEro=", value
             self.findkeyvaluelistaz(value)
         def zaEro():
-            if (nrm_config["debug"]>8): print "#zaEro=", value
+            if (nrm_config["debug"]>9): print "#zaEro=", value
             self.findkeyvaluelistza(value)
         def cost():
-            if (nrm_config["debug"]>8): print "#cost", value
+            if (nrm_config["debug"]>9): print "#cost", value
             self.cost = float(value)
         def azAvailable():
-            if (nrm_config["debug"]>8): print "#azAvailable", value
+            if (nrm_config["debug"]>9): print "#azAvailable", value
             self.azAvailable = int(value)
         def zaAvailable():
-            if (nrm_config["debug"]>8): print "#zaAvailable", value
+            if (nrm_config["debug"]>9): print "#zaAvailable", value
             self.zaAvailable = int(value)
         def azBaseline():
-            if (nrm_config["debug"]>8): print "#azBaseline", value
+            if (nrm_config["debug"]>9): print "#azBaseline", value
             self.azBaseline = int(value)
         def zaBaseline():
-            if (nrm_config["debug"]>8): print "#zaBaseline", value
+            if (nrm_config["debug"]>9): print "#zaBaseline", value
             self.zaBaseline = int(value)
 
         options = {"cost" : cost,
@@ -539,7 +539,7 @@ class nrm_pce(object):
         if options.has_key(key):
             options[key]()
         else:
-            if (nrm_config["debug"]>8): print "OSCARS: PCE assign NONE";
+            if (nrm_config["debug"]>9): print "OSCARS: PCE assign NONE";
         
     def assign_value(self, key, value):
         
@@ -572,38 +572,38 @@ class nrm_pce(object):
         
 
     def findkeyvaluedict(self, keystr):
-        if (nrm_config["debug"]>8): print "OSCARS: PCE findkeyvaluedict"
+        if (nrm_config["debug"]>9): print "OSCARS: PCE findkeyvaluedict"
         for keyv in keystr:
             value = keystr[keyv]
-            if (nrm_config["debug"]>8): print "#KD=", keyv
+            if (nrm_config["debug"]>9): print "#KD=", keyv
             self.assign(keyv, value)
 
     def findkeyvaluelistaz(self, keystr):
-        if (nrm_config["debug"]>8): print "OSCARS: PCE findkeyvaluelistaz"
+        if (nrm_config["debug"]>9): print "OSCARS: PCE findkeyvaluelistaz"
         if (len(keystr) == 0) :
-            if (nrm_config["debug"]>8): print "#VLaz="
+            if (nrm_config["debug"]>9): print "#VLaz="
         else :
-            if (nrm_config["debug"]>8): print "#MYLISTaz: ", keystr
+            if (nrm_config["debug"]>9): print "#MYLISTaz: ", keystr
             keystri = iter(keystr)
             for value in keystri:
-                if (nrm_config["debug"]>8): print "#KL2az=", value
+                if (nrm_config["debug"]>9): print "#KL2az=", value
                 for keyv in value:
                     myurnvalue = value[keyv]
-                    if (nrm_config["debug"]>8): print "#LISTaz: ", keyv, "=", myurnvalue
+                    if (nrm_config["debug"]>9): print "#LISTaz: ", keyv, "=", myurnvalue
                     self.azEro.append(str(myurnvalue))
 
     def findkeyvaluelistza(self, keystr):
-        if (nrm_config["debug"]>8): print "OSCARS: PCE findkeyvaluelistza"
+        if (nrm_config["debug"]>9): print "OSCARS: PCE findkeyvaluelistza"
         if (len(keystr) == 0) :
-            if (nrm_config["debug"]>8): print "#VLza="
+            if (nrm_config["debug"]>9): print "#VLza="
         else :
-            if (nrm_config["debug"]>8): print "#MYLISTza: ", keystr
+            if (nrm_config["debug"]>9): print "#MYLISTza: ", keystr
             keystri = iter(keystr)
             for value in keystri:
-                if (nrm_config["debug"]>8): print "#KL2za=", value
+                if (nrm_config["debug"]>9): print "#KL2za=", value
                 for keyv in value:
                     myurnvalue = value[keyv]
-                    if (nrm_config["debug"]>8): print "#LISTza: ", keyv, "=", myurnvalue
+                    if (nrm_config["debug"]>9): print "#LISTza: ", keyv, "=", myurnvalue
                     self.zaEro.append(str(myurnvalue))
 
 class nrm_oscars_json_parser(object):
@@ -619,15 +619,15 @@ class nrm_oscars_json_parser(object):
             if (key == "shortest") :  # OR shortest or fits
                 valuestr = jstr[key]
                 mypce=nrm_pce(id, deltaid, a, b, bt, et)
-                if (nrm_config["debug"]>8): print "#KEY=", key
+                if (nrm_config["debug"]>9): print "#KEY=", key
                 if (type(valuestr) is dict):
-                    if (nrm_config["debug"]>8): print "#DICT"
+                    if (nrm_config["debug"]>9): print "#DICT"
                     mypce.findkeyvaluedict(valuestr)
                 elif (valuestr is None):
-                    if (nrm_config["debug"]>8): print "#Value is None"
+                    if (nrm_config["debug"]>9): print "#Value is None"
                     mypce.findkeyvaluedict(valuestr)
                 else:
-                    if (nrm_config["debug"]>8): print "#LIST VALUE=", valuestr
+                    if (nrm_config["debug"]>9): print "#LIST VALUE=", valuestr
                     mypce.findkeyvaluedict(valuestr)
                 self.pce.append(mypce)
         return self.pce
@@ -636,11 +636,11 @@ class nrm_oscars_json_parser(object):
         for key in jstr:
             valuestr = jstr[key]
             myjunction=nrm_junction(key);
-            if (nrm_config["debug"]>8): print "#KEY=", key
+            if (nrm_config["debug"]>9): print "#KEY=", key
             if (type(valuestr) is dict):
                 myjunction.findkeyvaluedict(valuestr)
             else:
-                if (nrm_config["debug"]>8): print "#VALUE=", valuestr
+                if (nrm_config["debug"]>9): print "#VALUE=", valuestr
             self.junctions.append(myjunction)
         return self.junctions
     
@@ -762,7 +762,7 @@ class nrm_oscars_connection(object):
             if (nrm_config["debug"]>3): 
                 print "OSCARS: MODEL_AVAIL FAILED: ", resp._content
             raise Exception('OSCARS: Cannot get_avail_topo: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>6): 
+        if (nrm_config["debug"]>8): 
             print "OSCARS: MODEL_AVAIL :\n", resp._content
             self.writeAvail(str(myutime1), str(resp._content))
         
@@ -868,7 +868,7 @@ class nrm_oscars_connection(object):
             else :
                 if (nrm_config["debug"]>8): print "SAME junctions"
 
-        if (nrm_config["debug"]>8): 
+        if (nrm_config["debug"]>9): 
             print "OSCARS: PRINT DB ALL PCEs"
             with mydb_session() as s:
                 sensenrm_db.display_db_pce(s)
@@ -885,10 +885,11 @@ class nrm_oscars_connection(object):
         resp = requests.get(self._surl('/protected/held/clear/')+connid,
             verify=False, headers=myheaders)
         if (nrm_config["debug"]>8): print "OSCARS: CLEAR DONE: ", resp.status_code
-        if resp.status_code != 200:
+        if resp.status_code == 200:
+            if (nrm_config["debug"]>3): print "OSCARS: CLEAR: ", resp._content
+        else:
             if (nrm_config["debug"]>3): print "OSCARS: CLEAR FAILED: ", resp._content
-            raise Exception('OSCARS Cannot CLEAR: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): print "OSCARS: CLEAR: ", resp._content
+            #raise Exception('OSCARS Cannot CLEAR: {}'.format(resp.status_code))
         return resp.status_code, resp._content
 
     def get_commit(self, connid, groupid):
@@ -939,7 +940,7 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>8): print "OSCARS: CANCEL DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): print "OSCARS: CANCEL FAILED: ", resp._content
-            raise Exception('OSCARS Cannot CANCEL: {}'.format(resp.status_code))
+            #raise Exception('OSCARS Cannot CANCEL: {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): print "OSCARS: CANCEL: ", resp._content
         return resp.status_code, resp._content
 
@@ -1031,7 +1032,7 @@ class nrm_oscars_connection(object):
         zabw = 0
         mypipe='['
         for j in mypce:
-            if (nrm_config["debug"]>8):
+            if (nrm_config["debug"]>9):
                 print "OSCARS: HELD azEro: ", j.azEro
                 print "OSCARS: HELD zaEro: ", j.zaEro
             azbw = get_bandwidth(j.junction_a)
@@ -1060,7 +1061,7 @@ class nrm_oscars_connection(object):
         myjuncs='['
         for a in jlist:
             ja = a.split(':')[0]
-            if (nrm_config["debug"]>8): print "OSCARS: HELD junction = ", a, ", ", ja
+            if (nrm_config["debug"]>9): print "OSCARS: HELD junction = ", a, ", ", ja
             if not (ja in tjlist):
                 tjlist.append(ja)
                 if jlist.index(a) == 0:
@@ -1079,7 +1080,7 @@ class nrm_oscars_connection(object):
         myfix='['
         for a in flist:
             ja = a.id.split(':')[0]
-            if (nrm_config["debug"]>8): print "OSCARS: HELD junction = ", a, ", ", ja
+            if (nrm_config["debug"]>9): print "OSCARS: HELD junction = ", a, ", ", ja
             myfix=myfix+'{ "junction": "' + ja + '", \
                   "port": "' + a.port_urn + '", \
                   "vlan": ' + str(a.vlan_id) + ', \

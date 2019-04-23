@@ -371,7 +371,7 @@ class nrmDelta(object):
                             print "DELTA: CANCEL_DELTA_ALTID=", cancelid, "=", delta.altid
                             print "DELTA: CANCEL_HELD_ID=", delta.heldid
                 
-                        status, resp = nrmcancel.cancel(cancelid, uid)
+                        status, resp = nrmcancel.cancel(cancelid, uid, str(nrmargs['id']))
                         if status == 200:
                             if (nrm_config["debug"]>2): print "DELTA: CANCELLED"
                             res_msg = str(resp)
@@ -414,18 +414,18 @@ class nrmDelta(object):
                 urnsearch = nrm_config["urnprefix"]+"::"
                 if urnsearch in str(subject):
                     if "service+bw" in str(subject):
-                        if (nrm_config["debug"]>6): print "DELTA: SUBJECT:", subject
+                        if (nrm_config["debug"]>9): print "DELTA: SUBJECT:", subject
                         subj2 = subject.split("::")
-                        if (nrm_config["debug"]>6): print "DELTA: SUBJECT2:", subj2
+                        if (nrm_config["debug"]>9): print "DELTA: SUBJECT2:", subj2
                         subj3 = subj2[1].split(":")
-                        if (nrm_config["debug"]>6): print "DELTA: SUBJECT3:", subj3
+                        if (nrm_config["debug"]>9): print "DELTA: SUBJECT3:", subj3
 
                         junction = subj3[0]+":"+subj3[1].replace('_', '/')
-                        if (nrm_config["debug"]>6): print "DELTA: JUNC:", junction
+                        if (nrm_config["debug"]>9): print "DELTA: JUNC:", junction
                         tvport = int(subj3[3].split("+")[1])
-                        if (nrm_config["debug"]>6): print "DELTA: TVPORT:", tvport
+                        if (nrm_config["debug"]>9): print "DELTA: TVPORT:", tvport
                         djunction = junction + ":" + str(tvport)
-                        if (nrm_config["debug"]>6): print "DELTA: DJUNC:", djunction
+                        if (nrm_config["debug"]>9): print "DELTA: DJUNC:", djunction
                     
                         if "reservableCapacity" in str(predicate):
                             if (nrm_config["debug"]>6):
@@ -437,7 +437,7 @@ class nrmDelta(object):
                             else:
                                 dsw = delta_switch(sid=djunction, did=nrmargs['id'], mid=nrmargs['modelId'], bw=int(obj), vport=tvport)
                                 dict_switches[djunction] = dsw
-                                if (nrm_config["debug"]>6):
+                                if (nrm_config["debug"]>8):
                                     print "DELTA: ADD_SWITCH_LIST=", djunction
                                 if not (junction in list_junctions):
                                     list_junctions.append(junction)
@@ -448,7 +448,7 @@ class nrmDelta(object):
                                 list_switches.append(djunction)
                         
                         elif "unit" in str(predicate):
-                            if (nrm_config["debug"]>6):
+                            if (nrm_config["debug"]>8):
                                 print "DELTA: JUNCTION=", djunction
                                 print "DELTA: unit=", obj
 
@@ -467,7 +467,7 @@ class nrmDelta(object):
                             else:
                                 dsw = delta_switch(sid=djunction, did=nrmargs['id'], mid=nrmargs['modelId'], bw=0, vport=int(obj))
                                 dict_switches[djunction] = dsw
-                                if (nrm_config["debug"]>6):
+                                if (nrm_config["debug"]>8):
                                     print "DELTA: ADD_SWITCH_LIST=", djunction
                                 if not (junction in list_junctions):
                                     list_junctions.append(junction)
@@ -485,16 +485,16 @@ class nrmDelta(object):
                             if (nrm_config["debug"]>4): print "DELTA: LIFETIME_END=", obj
                             endtime=obj
                     elif "ServiceDomain:EVTS.A-GOLE:conn+" in str(subject):
-                        if (nrm_config["debug"]>6): print "DELTA: CONN_SUBJ:", subject
+                        if (nrm_config["debug"]>9): print "DELTA: CONN_SUBJ:", subject
                         subj2 = subject.split("::")
-                        if (nrm_config["debug"]>6): print "DELTA: CONN_SUBJ2:", subj2
+                        if (nrm_config["debug"]>9): print "DELTA: CONN_SUBJ2:", subj2
                         subj3 = subj2[1].split(":")
-                        if (nrm_config["debug"]>6): print "DELTA: CONN_SUBJ3:", subj3
+                        if (nrm_config["debug"]>9): print "DELTA: CONN_SUBJ3:", subj3
                         delta_connp = subj3[2].split("+")[1]
-                        if (nrm_config["debug"]>6): print "DELTA: CONN_ID+:", delta_connp
+                        if (nrm_config["debug"]>9): print "DELTA: CONN_ID+:", delta_connp
 
                         d_urs = subj3[3]
-                        if (nrm_config["debug"]>6): print "DELTA: CONN_URI_STRING:", d_urs
+                        if (nrm_config["debug"]>9): print "DELTA: CONN_URI_STRING:", d_urs
                         if not (d_urs in list_urs):
                             list_urs.append(d_urs)
                             if len(delta_urs) > 0:

@@ -266,6 +266,7 @@ class oiDelta(Base):
 
     id = Column(String, primary_key=True) # delta_id UUID from sense-o
     altid = Column(String) # conn+ id from delta when available
+    cancelid = Column(String) # conn+ id from delta when cancelled/reduction
     altvlan = Column(String) # vlan+ part associated with conn+ id from delta when available
     urs = Column(String) # URI string: e.g. resource+links-connection_1
     heldid = Column(String) # from OSCARS id e.g. "MMCF"
@@ -402,9 +403,9 @@ def insert_switch(s, did, swn, vport, bw, st, et, connid):
         oj = oSwitch(id=swid, deltaid=did, name=swn, vlanport=vport, reservedbw=bw, creation_date=timenow, active=0, time_begin=st, time_end=et, heldid=connid)
         s.add(oj)
         s.commit()
-        if (nrm_config["debug"]>6): print "DB: switch added=", swn, "=", swid
+        if (nrm_config["debug"]>9): print "DB: switch added=", swn, "=", swid
     else:
-        if (nrm_config["debug"]>6): print "DB:A switch exists=", swn, "=", swid
+        if (nrm_config["debug"]>9): print "DB:A switch exists=", swn, "=", swid
 
 def insert_switch_value(s, id, key, value):
     mObj = s.query(oSwitch).filter(oSwitch.id == id).first()
@@ -448,7 +449,7 @@ def insert_delta(s, uid, did, mid, swns, tstart, tend, aid, avlan, durs):
     else:
         if (nrm_config["debug"]>6): print "DB: delta exists=", did
 
-def insert_idelta_remove_delta(s, did, cancelled):
+def insert_idelta_remove_delta(s, did, cancelled, cid):
     if (nrm_config["debug"]>4): print "DB: INSERT_INACTIVE_DELTA"
 
     mObj = s.query(oDelta).filter(oDelta.id == did).first()
@@ -466,6 +467,8 @@ def insert_idelta_remove_delta(s, did, cancelled):
             oj.held_history = mObj.heldid
             timehistory = mObj.time_begin + ":" + mObj.time_end
             oj.time_history = timehistory
+            if not cancelled: 
+                oj.cancelid = cid
             s.add(oj)
             if (nrm_config["debug"]>6): print "DB: inactive delta added=", did
         else:
@@ -476,6 +479,8 @@ def insert_idelta_remove_delta(s, did, cancelled):
             miObj.held_history = heldhistory
             timehistory = miObj.time_history + "," + mObj.time_begin + ":" + mObj.time_end
             miObj.time_history = timehistory
+            if not cancelled: 
+                miObj.cancelid = cid
             s.add(miObj)
         # Cancel equivalent
         update_switch(s, did, 0)
@@ -520,7 +525,7 @@ def remove_expired_deltas(s):
                     print "DB: IS_EXPIRED_TDIFF=", tdiff
                     print "DB: IS_EXPIRED_REMOVE=", f.id
                     print "DB: IS_EXPIRED_ENDTIME=", f.time_end
-                insert_idelta_remove_delta(s, f.id, False)
+                insert_idelta_remove_delta(s, f.id, False, "")
     else:
         if (nrm_config["debug"]>4): print "DB: NO active deltas"
 
@@ -547,7 +552,7 @@ def remove_expired_delta(s, did):
                 print "DB: IS2_EXPIRED_TDIFF=", tdiff
                 print "DB: IS2_EXPIRED_REMOVE=", mObj.id
                 print "DB: IS2_EXPIRED_ENDTIME=", time_to_compare
-            insert_idelta_remove_delta(s, mObj.id, False)
+            insert_idelta_remove_delta(s, mObj.id, False, "")
             resp_status = True
     return resp_status    
 
@@ -807,7 +812,7 @@ def update_conn(s, cid, key, value):
     s.commit()
 
 def insert_junction(s, mj):    
-    if (nrm_config["debug"]>8): 
+    if (nrm_config["debug"]>9): 
         print "DB: INSERT_JUNCTION indented_show"
         mj.indented_show()
         print "DB: INSERT_JUNCTION indented_show DONE"
@@ -816,9 +821,9 @@ def insert_junction(s, mj):
         oj = oJunction(id=mj.junction_name, name=mj.junction_name, port_urn=mj.port_urn, vlan_expression=mj.vlanExpression, ingress_bandwidth=mj.ingressBandwidth, egress_bandwidth=mj.egressBandwidth, bidports="")
         s.add(oj)
         s.commit()
-        if (nrm_config["debug"]>7): print "DB: junction added=", mj.junction_name, "=", oj.id
+        if (nrm_config["debug"]>9): print "DB: junction added=", mj.junction_name, "=", oj.id
     else:
-        if (nrm_config["debug"]>7): print "DB: junction exists=", mj.junction_name, "=", mObj.id
+        if (nrm_config["debug"]>9): print "DB: junction exists=", mj.junction_name, "=", mObj.id
         mObj.port_urn = mj.port_urn
         mObj.vlan_expression = mj.vlanExpression
         mObj.ingress_bandwidth = mj.ingressBandwidth
@@ -830,19 +835,19 @@ def display_db_junctions(s):
     allJunctions = s.query(oJunction).all();
     if (nrm_config["debug"]>4): print "\nDB: num junctions = ", len(allJunctions)
     jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth } for f in allJunctions]
-    if (nrm_config["debug"]>7): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
 
 def display_db_pce(s):
     allPCEs = s.query(oPCE).all();
     if (nrm_config["debug"]>4): print "\nDB: num PCEs = ", len(allPCEs)
     jDetails = [{"id": f.id, "time_begin": f.time_begin, "time_end":f.time_end, "evaluated": f.evaluated, "cost": f.cost, "available_az": f.available_az, "available_za": f.available_za, "baseline_az": f.baseline_az, "baseline_za": f.baseline_za, "heldid":f.heldid, "held_id":f.held_id} for f in allPCEs]
-    if (nrm_config["debug"]>7): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
     
 def display_db_held(s):
     allJunctions = s.query(oJunction).all();
     if (nrm_config["debug"]>4): print "\nDB: num junctions = ", len(allJunctions)
     jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth} for f in allJunctions]
-    if (nrm_config["debug"]>7): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
   
 def insert_junction_bidports(s, deltaid, plist):
     # plist to be the list of the switches: SWITCHES= [u'wash-cr5:7/1/1:3603', u'chic-cr5:3/2/1:3603']
@@ -958,7 +963,7 @@ def insert_junction_value(s, id, key, value):
     s.commit()
     
 def insert_pce(s, mj):
-    if (nrm_config["debug"]>8): 
+    if (nrm_config["debug"]>9): 
         print "DB: INSERT_PCE indented_show"
         mj.indented_show()
         print "DB: INSERT_PCE indented_show DONE"
@@ -967,17 +972,17 @@ def insert_pce(s, mj):
     if mObj is None:
         oj = oPCE(id=mj.id, heldid = mj.held_id, time_begin=str(mj.time_begin.strftime('%Y-%m-%dT%H:%M:%S.%f'))+"-07:00", time_end=str(mj.time_end.strftime('%Y-%m-%dT%H:%M:%S.%f'))+"-07:00", pcemode=pceModes.shortest, evaluated=mj.evaluated, cost=mj.cost, ero_az=','.join(mj.azEro), ero_za=','.join(mj.zaEro), available_az=mj.azAvailable, available_za=mj.zaAvailable, baseline_az=mj.azBaseline, baseline_za=mj.zaBaseline);
         s.add(oj)
-        if (nrm_config["debug"]>8):
+        if (nrm_config["debug"]>9):
             print "DB: PCE added (DeltaID)=", mj.id, "=", oj.id
             print "DB: PCE added (HeldOID)=", mj.held_id, "=", oj.heldid
             #print "DB: PCE DISPLAY"
         s.commit()
-        #if (nrm_config["debug"]>8):
+        #if (nrm_config["debug"]>9):
         #    print "DB: PCE committed1=", mj.id, "=", oj.id
         #    print "DB: PCE committed2=", mj.held_id, "=", oj.heldid
         #    print "DB: PCE committed3=", mj.held_id, "=", oj.held_id
     else:
-        if (nrm_config["debug"]>8):
+        if (nrm_config["debug"]>9):
             print "DB: PCE exists1=", mj.id, "=", mObj.id
             print "DB: PCE exists2=", mj.held_id, "=", mObj.heldid
             print "DB: PCE exists3=", mj.held_id, "=", mObj.held_id
@@ -1172,11 +1177,11 @@ def display_db(s):
     allJunctions = s.query(oJunction).all();
     if (nrm_config["debug"]>8): print "\nDB: num junctions = ", len(allJunctions)
     jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth} for f in allJunctions]
-    if (nrm_config["debug"]>8): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
 
     allHelds = s.query(oHeld).all();
     if (nrm_config["debug"]>8): print "\nDB: num helds = ", len(allHelds);
     hDetails = [{"id": t.id, "id_name": t.pipe_a.id, "name": t.pipe_a.name, "vlan_expression":t.pipe_a.vlan_expression} for t in allHelds]
-    if (nrm_config["debug"]>8): print (json.dumps(hDetails, indent = 4))
+    if (nrm_config["debug"]>9): print (json.dumps(hDetails, indent = 4))
     if (nrm_config["debug"]>8): print "DB: Printed database successfully"
 

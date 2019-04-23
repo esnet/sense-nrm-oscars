@@ -77,7 +77,7 @@ class nrmCancel(object):
         time_iso8601 = fmt_datetime + fmt_timezone
         return time_iso8601
     
-    def cancel(self, nrm_deltaid, uid):
+    def cancel(self, nrm_deltaid, uid, cid):
         with mydb_session() as s:            
             delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == nrm_deltaid).first()
             if delta is None:
@@ -103,7 +103,7 @@ class nrmCancel(object):
                 if status == 400:
                     sensenrm_db.update_switch(s, did, 0)
                     sensenrm_db.remove_junction_bidports_with_delta(s, did)
-                    sensenrm_db.insert_idelta_remove_delta(s, did, True)
+                    sensenrm_db.insert_idelta_remove_delta(s, did, True, cid)
                     if (nrm_config["debug"]>0): 
                         print "Cannot_CANCEL_BUT_Cancelled_400: ", status
                 elif status != 200:
@@ -112,7 +112,7 @@ class nrmCancel(object):
                 else:
                     sensenrm_db.update_switch(s, did, 0)
                     sensenrm_db.remove_junction_bidports_with_delta(s, did)
-                    sensenrm_db.insert_idelta_remove_delta(s, did, True)
+                    sensenrm_db.insert_idelta_remove_delta(s, did, True, cid)
                     if (nrm_config["debug"]>0): 
                         print "CANCEL_STATUS=", status
                         print "CANCEL_RESP=", resp
@@ -152,7 +152,7 @@ class nrmCancel(object):
                     if status == 400:
                         sensenrm_db.update_switch(s, did, 0)
                         sensenrm_db.remove_junction_bidports_with_delta(s, did)
-                        sensenrm_db.insert_idelta_remove_delta(s, did, True)
+                        sensenrm_db.insert_idelta_remove_delta(s, did, True, "")
                         if (nrm_config["debug"]>0):
                             print "Cannot_CANCELALL_BUT_Cancelled_400: ", status
                         result = result + "OK2"
@@ -163,7 +163,7 @@ class nrmCancel(object):
                     else:
                         sensenrm_db.update_switch(s, did, 0)
                         sensenrm_db.remove_junction_bidports_with_delta(s, did)
-                        sensenrm_db.insert_idelta_remove_delta(s, did, True)
+                        sensenrm_db.insert_idelta_remove_delta(s, did, True, "")
                         if (nrm_config["debug"]>0):
                             print "CANCELALL_STATUS=", status
                             print "CANCELALL_RESP=", resp

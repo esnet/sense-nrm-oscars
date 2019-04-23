@@ -76,8 +76,14 @@ class nrmCommit(object):
         with mydb_session() as s:            
             delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == nrm_deltaid).first()
             if delta is None:
-                if (nrm_config["debug"]>0):
-                    print "COMMIT_DELTAID_NOTFOUND=", nrm_deltaid
+                if (nrm_config["debug"]>0): print "COMMIT_DELTAID_NOTFOUND=", nrm_deltaid
+                delta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.cancelid == nrm_deltaid).first()
+                if delta is None:
+                    if (nrm_config["debug"]>0): print "COMMIT_iDELTAID_NOTFOUND=", nrm_deltaid
+                else:
+                    if (nrm_config["debug"]>0):
+                        print "COMMIT_CANCELLED_DELTA_ID=", nrm_deltaid, "=", delta.id, "=", delta.cancelid
+                    return True
                 return False
             if (nrm_config["debug"]>0):
                 print "COMMIT_DELTA_ID=", nrm_deltaid, "=", delta.id

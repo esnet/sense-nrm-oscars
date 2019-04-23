@@ -178,7 +178,7 @@ class ModelsAPI(Resource):
                 if (nrm_config["debug"]>3): print "SVC: MODELS INIT DONE"
                 if status:
                     if (nrm_config["debug"]>3): print "SVC: MODELS RETURNED"
-                    #if (nrm_config["debug"]>8): print mymodels
+                    #if (nrm_config["debug"]>9): print mymodels
                     return marshal(mymodels, model_fields)
                     #mycontent = marshal(mymodels, model_fields)
                     #myresp = make_response(jsonify(mycontent))
@@ -312,7 +312,7 @@ class CancelAPI(Resource):
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
-                status, resp = nrmcancel.cancel(deltaid, udn)
+                status, resp = nrmcancel.cancel(deltaid, udn, "")
                 if status == 200:
                     if (nrm_config["debug"]>3): print "SVC: CANCEL_OK:", status
                     return {'result': "CANCELED" }, status

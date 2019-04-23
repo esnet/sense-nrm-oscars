@@ -293,9 +293,9 @@ class nrmModel(object):
         #if (nrm_config["debug"]>8):
         #    print '[{"id":', str(self.getUUID()),',"href":', str(self.getURL()),',"creationTime":', str(self.getTime()),',"model":', str(modelc), '}]', str(self.getTime())
         
-        if (nrm_config["debug"]>8):
+        if (nrm_config["debug"]>9):
             print "modelcontent=", modelcontent
-        if (nrm_config["debug"]>6):
+        if (nrm_config["debug"]>8):
             self.writeModel(str(self.getUUID()), modelcontent)
         
         return [{"id":str(self.getUUID()),"href":str(self.getURL()),"creationTime":str(self.getTime()),"model":str(modelcontent)}], self.last_time, True
