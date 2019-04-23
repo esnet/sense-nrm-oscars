@@ -19,7 +19,8 @@
 # Fri Apr 12 10:13:23 PDT 2019
 # sdmsupport@lbl.gov
 #
-from flask import Flask, jsonify, abort, make_response, request
+from flask import Flask, jsonify, abort, make_response, request, Response
+#from flask import Flask, jsonify, abort, make_response, request
 from flask_restful import Api, Resource, reqparse, fields, marshal
 
 import ssl
@@ -33,6 +34,7 @@ import dateutil.parser
 import base64
 import gzip
 import zlib
+#import json
 
 from sensenrm_config import ssl_config, nrm_config
 import sensenrm_db
@@ -43,6 +45,8 @@ import sensenrm_commit
 import sensenrm_clear
 import sensenrm_cancel
 
+title_info = "SENSE Network Resource Manager for OSCARS"
+version_info = "v1.0.0 on 23 April 2019"
 errors = {
     'NotFound': {
         'message': "A resource with that ID do not exist.",
@@ -78,6 +82,15 @@ def time_rfc1123():
     rfc1123_time = format_date_time(stamp)
     return rfc1123_time
 
+def time_rfc1123_from_datetime(dt):
+    import pytz
+    udt = dt.astimezone(pytz.utc)
+    local_tz = pytz.timezone('US/Pacific')
+    local_dt = udt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    stamp = mktime(local_dt.timetuple())
+    rfc1123_time = format_date_time(stamp)
+    return rfc1123_time
+
 def time_iso8601(dt):
     """YYYY-MM-DDThh:mm:ssTZD (1997-07-16T19:20:30-03:00)"""
     if dt is None:
@@ -110,6 +123,10 @@ model_fields = {
     'model': fields.Raw
 }
 
+modelno_fields = {
+    'model': fields.Raw
+}
+
 delta_fields = {
     'id': fields.Raw,
     'lastModified': fields.Raw,
@@ -136,29 +153,52 @@ class ModelsAPI(Resource):
             #request.environ.get('HTTP_X_REAL_IP')
             print "SVC: MODEL_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
             print "SVC: MODEL_SSL_IP:", request.environ.get('HTTP_X_REAL_IP')
-        udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
-        with mydb_session() as s:
-            results = sensenrm_db.validate_user(s, udn)
-            if results:
-                self.reqparse = reqparse.RequestParser()
-                self.reqparse.add_argument('current', type = str, default = "true")
-                self.reqparse.add_argument('summary', type = str, default = "false")
-                self.reqparse.add_argument('encode', type = str, default = "false")
-                self.models = nrmmodels.getModel()
-                if (nrm_config["debug"]>3): print "SVC: MODELS INIT DONE"
-            else:
-                self.models = "UNAUTHORIZED_USER"
+        #udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+        #with mydb_session() as s:
+        #    results = sensenrm_db.validate_user(s, udn)
+        #    if results:
+        #        self.reqparse = reqparse.RequestParser()
+        #        self.reqparse.add_argument('current', type = str, default = "true")
+        #        self.reqparse.add_argument('summary', type = str, default = "false")
+        #        self.reqparse.add_argument('encode', type = str, default = "false")
+        #        self.models = nrmmodels.getModel()
+        #        if (nrm_config["debug"]>3): print "SVC: MODELS INIT DONE"
+        #    else:
+        #        self.models = "UNAUTHORIZED_USER"
         super(ModelsAPI, self).__init__()
     
     def get(self):
         if (nrm_config["debug"]>3): print "SVC: MODELS GET"
-        if self.models == None:
-            return {'model': str("NO_CHANGES")}, 304
-        elif self.models == "UNAUTHORIZED_USER":
-            return {'model': str("UNAUTHORIZED_USER")}, 403
-        else:
-            if (nrm_config["debug"]>8): print self.models
-            return marshal(self.models, model_fields)
+
+        udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+        with mydb_session() as s:
+            results = sensenrm_db.validate_user(s, udn)
+            if results:
+                mymodels,last_modtime,status = nrmmodels.getModel()
+                if (nrm_config["debug"]>3): print "SVC: MODELS INIT DONE"
+                if status:
+                    if (nrm_config["debug"]>3): print "SVC: MODELS RETURNED"
+                    #if (nrm_config["debug"]>8): print mymodels
+                    return marshal(mymodels, model_fields)
+                    #mycontent = marshal(mymodels, model_fields)
+                    #myresp = make_response(jsonify(mycontent))
+                    #myresp.status_code = 200
+                    #return myresp
+                else:
+                    if (nrm_config["debug"]>3): print "SVC: MODELS NO_CHANGES HERE"
+                    my_lasttime = time_rfc1123_from_datetime(last_modtime)
+                    mymodels = [{"id":str(""),"href":str(""),"creationTime":str(time_rfc1123()),"model":str("")}]
+                    mycontent = marshal(mymodels, model_fields)
+                    myresp = make_response(jsonify(mycontent))
+                    myresp.headers["Last-Modified"] = str(my_lasttime)
+                    myresp.headers["content-type"] = "application/json"
+                    myresp.status_code = 200
+                    #myresp.status_code = 304
+                    return myresp
+            else:
+                mymodels = "UNAUTHORIZED_USER"
+                if (nrm_config["debug"]>3): print "SVC: MODELS 403 INVALID_USER"
+                return {'model': str("UNAUTHORIZED_USER")}, 403
 
     def post(self):
         if (nrm_config["debug"]>3): print "SVC: MODELS POST"
@@ -402,10 +442,14 @@ def info():
         #print "SVC: INFO_1: ", request.__dict__
         print "SVC: INFO_2: ", request.headers
         #print "SVC: INFO_3: ", request.environ
-    return """Following info on SENSE-N-RM:
-X-MYHost: {}
-X-Real-IP: {}
+    return """
+MRM-info: {}
+Version-info: {}
+NRMHost: {}
+IP: {}
 """.format(
+    title_info,
+    version_info,
     request.environ.get('HTTP_X_MYHOST'),
     request.environ.get('HTTP_X_REAL_IP'))
 
@@ -422,13 +466,17 @@ def sslinfo():
         results = sensenrm_db.validate_user(s, udn)
         if results:
             vuser = "AUTHORIZED_USER"
-    return """Following info on the certificate you provided:
-X-MYHost: {}
-X-SSL-Verified: {}
-X-SSL-DN: {}
-X-Real-IP: {}
-X-AUTHZ-USER: {}
+    return """
+MRM-info: {}
+Version-info: {}
+NRMHost: {}
+SSL-Verified: {}
+SSL-DN: {}
+IP: {}
+AUTHZ-USER: {}
 """.format(
+    title_info,
+    version_info,
     request.environ.get('HTTP_X_MYHOST'),
     request.environ.get('HTTP_X_SSL_CLIENT_VERIFY'),
     request.environ.get('HTTP_X_SSL_CLIENT_S_DN'),

@@ -142,7 +142,8 @@ class nrmModel(object):
     
     def getModel(self):
         if not self.getAvailOK() :
-            return None
+            if (nrm_config["debug"]>3): print "MODEL: LAST_TIME=", self.last_time
+            return [{"id":str(""),"href":str(self.getURL()),"creationTime":str(self.getTime()),"model":str("")}], self.last_time, False
 
         urnpr = nrm_config["urnprefix"]
 
@@ -297,4 +298,4 @@ class nrmModel(object):
         if (nrm_config["debug"]>6):
             self.writeModel(str(self.getUUID()), modelcontent)
         
-        return [{"id":str(self.getUUID()),"href":str(self.getURL()),"creationTime":str(self.getTime()),"model":str(modelcontent)}]
+        return [{"id":str(self.getUUID()),"href":str(self.getURL()),"creationTime":str(self.getTime()),"model":str(modelcontent)}], self.last_time, True

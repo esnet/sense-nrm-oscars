@@ -534,6 +534,13 @@ class nrmDelta(object):
                 except Exception as e:
                     if (nrm_config["debug"]>0): print "DELTA: Get_Conn_ID EXCEPT: ", e
                     raise 
+
+                if len(delta_connp) > 0:
+                    d_mainid = nrmargs['id']
+                    d_altid = delta_connp
+                else:
+                    d_mainid = nrmargs['id']
+                    d_altid = delta_connp
                 sensenrm_db.insert_delta(s, uid, nrmargs['id'], nrmargs['modelId'], liststr_switches, starttime, endtime, delta_connp, delta_avlan, delta_urs)
                 sensenrm_db.insert_delta_value(s, nrmargs['id'], "heldid", connid)
 
