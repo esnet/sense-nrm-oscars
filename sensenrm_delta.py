@@ -234,8 +234,8 @@ class nrmDelta(object):
                 if (nrm_config["debug"]>2): print "DELTA: STATUS_ID_NOT_FOUND=", nrm_deltaid
                 delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.altid == nrm_deltaid).first()
                 if delta is None:
-                    if (nrm_config["debug"]>2): print "DELTA: STATUS_ALTID_NOT_FOUND=", cancelid
-                    active_delta_status = sensenrm_db.is_delta_active(s, cancelid, False)
+                    if (nrm_config["debug"]>2): print "DELTA: STATUS_ALTID_NOT_FOUND=", nrm_deltaid
+                    active_delta_status = sensenrm_db.is_delta_active(s, nrm_deltaid, False)
                     if not active_delta_status:
                         if (nrm_config["debug"]>2): print "DELTA: STATUS_ID:"+nrm_deltaid+":NOT_ATIVE"
                         idelta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.id == nrm_deltaid).first()
