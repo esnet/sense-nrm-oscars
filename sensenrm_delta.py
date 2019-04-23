@@ -541,8 +541,8 @@ class nrmDelta(object):
                 else:
                     d_mainid = nrmargs['id']
                     d_altid = delta_connp
-                sensenrm_db.insert_delta(s, uid, nrmargs['id'], nrmargs['modelId'], liststr_switches, starttime, endtime, delta_connp, delta_avlan, delta_urs)
-                sensenrm_db.insert_delta_value(s, nrmargs['id'], "heldid", connid)
+                sensenrm_db.insert_delta(s, uid, d_mainid, nrmargs['modelId'], liststr_switches, starttime, endtime, d_altid, delta_avlan, delta_urs)
+                sensenrm_db.insert_delta_value(s, d_mainid, "heldid", connid)
 
     ############
     # P2P and Multipoint
