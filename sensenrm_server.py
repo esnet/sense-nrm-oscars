@@ -231,7 +231,7 @@ class DeltasAPI(Resource):
             results = sensenrm_db.validate_user(s, udn)
             if results:
                 deltas, mystatus =nrmdeltas.processDelta(args, udn)
-                if (nrm_config["debug"]>8): print "SVC: DELTA_POST=", mystatus
+                if (nrm_config["debug"]>7): print "SVC: DELTA_POST=", mystatus
                 rstatus = 201
                 if int(mystatus) != 200: 
                     if (nrm_config["debug"]>3): print "SVC: DELTA_POST_ERROR=", mystatus

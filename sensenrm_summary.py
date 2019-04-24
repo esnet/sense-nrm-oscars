@@ -69,7 +69,7 @@ class nrmSummary(object):
     def getDelta(self, nrm_uuid):
         inputdelta = basePath+"/delta_" + nrm_uuid + ".txt"
         if not os.path.isfile(inputdelta):
-            if (nrm_config["debug"]>8): print "SUMM: no such delta input file: ", nrm_uuid, " in ", basePath
+            if (nrm_config["debug"]>7): print "SUMM: no such delta input file: ", nrm_uuid, " in ", basePath
             exit()
         fi = fileinput.FileInput(inputdelta)
         deltacontent = fi.readline()

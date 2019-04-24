@@ -666,7 +666,7 @@ class nrm_oscars_connection(object):
         return 'https://' + self.oscars_url + path
 
     def get_token(self, uid, upasswd):
-        if (nrm_config["debug"]>8): print "OSCARS: GetToken"
+        if (nrm_config["debug"]>7): print "OSCARS: GetToken"
 #        if oscars_config["default_user"] == None:
 #            raise Exception('Cannot get oscars_config["default_user"]. Edit sensenrm_config.py for oscars_config.default_user')
 #        else:
@@ -679,7 +679,7 @@ class nrm_oscars_connection(object):
             'username': uid,
             'password': upasswd
             }, verify=False)
-        if (nrm_config["debug"]>8): print "OSCARS: GetToken DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: GetToken DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
                 print "OSCARS: Token FAILED:", resp._content
@@ -690,9 +690,9 @@ class nrm_oscars_connection(object):
         return str(resp._content)
     
     def get_sslinfo(self):
-        if (nrm_config["debug"]>8): print "OSCARS: SSLinfo"
+        if (nrm_config["debug"]>7): print "OSCARS: SSLinfo"
         resp = requests.get(self._surl('/api/version'), verify=False)
-        if (nrm_config["debug"]>8): 
+        if (nrm_config["debug"]>7): 
             print "OSCARS: SSLinfo DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
@@ -704,9 +704,9 @@ class nrm_oscars_connection(object):
         return str(resp._content)
             
     def get_info(self):
-        if (nrm_config["debug"]>8): print "OSCARS: Info"
+        if (nrm_config["debug"]>7): print "OSCARS: Info"
         resp = requests.get(self._surl('/api/topo/version'), verify=False)
-        if (nrm_config["debug"]>8): 
+        if (nrm_config["debug"]>7): 
             print "OSCARS: Info DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
@@ -720,10 +720,10 @@ class nrm_oscars_connection(object):
         with mydb_session() as s:
             thisToken = sensenrm_db.get_group_token(s, "default")
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>8): print "OSCARS: Protected_SSL"
+        if (nrm_config["debug"]>7): print "OSCARS: Protected_SSL"
         resp = requests.get(self._surl('/protected/greeting'), 
                             verify=False, headers=myheaders)
-        if (nrm_config["debug"]>8): 
+        if (nrm_config["debug"]>7): 
             print "OSCARS: Protected_SSL DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
@@ -755,7 +755,7 @@ class nrm_oscars_connection(object):
             'ending': myutime2
             }, verify=False)
 
-        if (nrm_config["debug"]>8): 
+        if (nrm_config["debug"]>7): 
             print "OSCARS: GET_MODEL_DONE: ", resp.status_code
             # print "HERE_TOPO"
         if resp.status_code != 200:
@@ -772,16 +772,16 @@ class nrm_oscars_connection(object):
         for j in myjunctions:
             with mydb_session() as s:
                 sensenrm_db.insert_junction(s, j)
-        if (nrm_config["debug"]>8): 
+        if (nrm_config["debug"]>7): 
             with mydb_session() as s:
                 sensenrm_db.display_db_junctions(s)
         return str(resp._content)
 
     def get_reserved(self):
-        if (nrm_config["debug"]>8): print "OSCARS: RESERVED_LIST"
+        if (nrm_config["debug"]>7): print "OSCARS: RESERVED_LIST"
         resp = requests.get(self._surl('/api/conn/simplelist'), verify=False)
 
-        if (nrm_config["debug"]>8):
+        if (nrm_config["debug"]>7):
             print "OSCARS: GET_RESERVED_LIST_DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3):
@@ -797,10 +797,10 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: ConnID Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>8): print "OSCARS: ConnID"
+        if (nrm_config["debug"]>7): print "OSCARS: ConnID"
         resp = requests.get(self._surl('/protected/conn/generateId'), 
                             verify=False, headers=myheaders)
-        if (nrm_config["debug"]>8): print "OSCARS: ConnID DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: ConnID DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
                 print "OSCARS: ConnID FAILED: ", resp._content
@@ -814,7 +814,7 @@ class nrm_oscars_connection(object):
         return str(resp._content)
     
     def get_pce(self, id, deltaid, src, dest, myutime1, myutime2):
-        if (nrm_config["debug"]>8): print "OSCARS: Path_Computation"
+        if (nrm_config["debug"]>7): print "OSCARS: Path_Computation"
 
         resp = requests.post(self._surl('/api/pce/paths'), json={
             "interval": {
@@ -826,7 +826,7 @@ class nrm_oscars_connection(object):
             "azBw": 0,
             "zaBw": 0
             }, verify=False)
-        if (nrm_config["debug"]>8): print "OSCARS: Path_Computation DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: Path_Computation DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): print "OSCARS: Path_Computation FAILED: ", resp._content
             raise Exception('OSCARS: Cannot get_PCE : {}'.format(resp.status_code))
@@ -848,7 +848,7 @@ class nrm_oscars_connection(object):
         #if (nrm_config["debug"]>5): 
         #    print "PCE_time_unixtime=", myutime1, ", ", myutime2
 
-        if (nrm_config["debug"]>8): print "OSCARS: Path_Computation_list"
+        if (nrm_config["debug"]>7): print "OSCARS: Path_Computation_list"
         
         jpairs = [(jlist[i],jlist[j]) for i in range(len(jlist)) for j in range(i+1, len(jlist))]
         if (nrm_config["debug"]>6): print "OSCARS: Junction_Pairs=", jpairs
@@ -856,7 +856,7 @@ class nrm_oscars_connection(object):
         for a, z in jpairs:
             ja = a.split(':')[0] #oSwitch.id = delta.id:netlab-7750sr12-rt1:9/1/4:port
             jz = z.split(':')[0]
-            if (nrm_config["debug"]>8): 
+            if (nrm_config["debug"]>7): 
                 print a, z
                 print ja, jz
             if not (ja == jz) :
@@ -866,7 +866,7 @@ class nrm_oscars_connection(object):
                     if (nrm_config["debug"]>3): print "OSCARS: PCE EXCEPT: ", e
                     raise
             else :
-                if (nrm_config["debug"]>8): print "SAME junctions"
+                if (nrm_config["debug"]>7): print "SAME junctions"
 
         if (nrm_config["debug"]>9): 
             print "OSCARS: PRINT DB ALL PCEs"
@@ -881,10 +881,10 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: CLEAR Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken}
-        if (nrm_config["debug"]>8): print "OSCARS: CLEAR_ID=", connid
+        if (nrm_config["debug"]>7): print "OSCARS: CLEAR_ID=", connid
         resp = requests.get(self._surl('/protected/held/clear/')+connid,
             verify=False, headers=myheaders)
-        if (nrm_config["debug"]>8): print "OSCARS: CLEAR DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: CLEAR DONE: ", resp.status_code
         if resp.status_code == 200:
             if (nrm_config["debug"]>3): print "OSCARS: CLEAR: ", resp._content
         else:
@@ -898,11 +898,11 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: COMMIT Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>8): print "OSCARS: COMMIT_ID=", connid
+        if (nrm_config["debug"]>7): print "OSCARS: COMMIT_ID=", connid
 
         resp = requests.post(self._surl('/protected/conn/commit'), 
             connid, verify=False, headers=myheaders)
-        if (nrm_config["debug"]>8): print "OSCARS: COMMIT DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: COMMIT DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): print "OSCARS: COMMIT FAILED: ", resp._content
             raise Exception('OSCARS Cannot COMMIT: {}'.format(resp.status_code))
@@ -915,11 +915,11 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: UNCOMMIT Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>8): print "OSCARS: UNCOMMIT"
+        if (nrm_config["debug"]>7): print "OSCARS: UNCOMMIT"
         resp = requests.post(self._surl('/protected/conn/uncommit'), json={
             'connectionId': connid
             }, verify=False, headers=myheaders)
-        if (nrm_config["debug"]>8): print "OSCARS: UNCOMMIT DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: UNCOMMIT DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): print "OSCARS: UNCOMMIT FAILED: ", resp._content
             raise Exception('OSCARS:Cannot UNCOMMIT : {}'.format(resp.status_code))
@@ -932,12 +932,12 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: CANCEL Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>8): 
+        if (nrm_config["debug"]>7): 
             print "OSCARS: CANCEL GROUPID:",groupid
         #resp = requests.post(self._surl('/protected/conn/cancel'), 
         resp = requests.post(self._surl('/protected/conn/release'), 
             connid, verify=False, headers=myheaders)
-        if (nrm_config["debug"]>8): print "OSCARS: CANCEL DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: CANCEL DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): print "OSCARS: CANCEL FAILED: ", resp._content
             #raise Exception('OSCARS Cannot CANCEL: {}'.format(resp.status_code))
@@ -945,9 +945,9 @@ class nrm_oscars_connection(object):
         return resp.status_code, resp._content
 
     def get_status(self, connid):
-        if (nrm_config["debug"]>8): print "OSCARS: STATUS"
+        if (nrm_config["debug"]>7): print "OSCARS: STATUS"
         resp = requests.get(self._surl('/api/conn/info/'+connid), verify=False)
-        if (nrm_config["debug"]>8): print "OSCARS: STATUS_DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: STATUS_DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): print "OSCARS: STATUS FAILED: ", resp._content
             raise Exception('OSCARS Cannot get STATUS: {}'.format(resp.status_code))
@@ -983,7 +983,7 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: HELD Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        #if (nrm_config["debug"]>8): print "OSCARS: HELD_headers: ", myheaders
+        #if (nrm_config["debug"]>7): print "OSCARS: HELD_headers: ", myheaders
 
         if (connid is None) or (deltaid is None):
             raise Exception('OSCARS: Cannot HELD. Conn ID and/or Delta ID is empty.')
@@ -997,7 +997,7 @@ class nrm_oscars_connection(object):
             print "OSCARS: HELD begin,end=", myutime1, ", ", myutime2
             print "OSCARS: HELD URL=", self._surl('/protected/held/{:s}'.format(connid))
 
-        if (nrm_config["debug"]>8): print "PCE came along: ", len(mypce)
+        if (nrm_config["debug"]>7): print "PCE came along: ", len(mypce)
         if (nrm_config["debug"]>5):
             for j in mypce:
                 #print "OSCARS: HELD UUID: ", j.id
@@ -1023,9 +1023,9 @@ class nrm_oscars_connection(object):
             for a in flist:
                 ja = a.id.split(':')[0]
                 if (devicename == ja):
-                    if (nrm_config["debug"]>8): print "OSCARS: HELD devicename_found=", a.port_urn
+                    if (nrm_config["debug"]>7): print "OSCARS: HELD devicename_found=", a.port_urn
                     return (int) (swdict[a.port_urn+":"+str(a.vlan_id)].reservedbw / 1000000)
-            if (nrm_config["debug"]>8): print "OSCARS: HELD devicename_not_found=", devicename   # it should not be here
+            if (nrm_config["debug"]>7): print "OSCARS: HELD devicename_not_found=", devicename   # it should not be here
             return -1
 
         azbw = 0
@@ -1090,7 +1090,7 @@ class nrm_oscars_connection(object):
             if flist.index(a) != len(flist)-1:
                 myfix = myfix + ','
         myfix = myfix + ']'
-        if (nrm_config["debug"]>8): print "OSCARS: HELD Fixtures=", myfix
+        if (nrm_config["debug"]>7): print "OSCARS: HELD Fixtures=", myfix
         
         from collections import OrderedDict
         jsontext='{ \
@@ -1112,7 +1112,7 @@ class nrm_oscars_connection(object):
             print "HELD INPUT"
             print json.dumps(jsonobj, indent=4)
         
-        if (nrm_config["debug"]>8): print "OSCARS: HELD"
+        if (nrm_config["debug"]>7): print "OSCARS: HELD"
         req = requests.Request('POST', self._surl('/protected/hold'), headers=myheaders, json=jsonobj)
 
         prepared = req.prepare()
@@ -1130,7 +1130,7 @@ class nrm_oscars_connection(object):
         s = requests.Session()
         resp = s.send(prepared, verify=False)
         # response is when your hold expires before that you will need to do a commit
-        if (nrm_config["debug"]>8): print "OSCARS: HELD DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): print "OSCARS: HELD DONE: ", resp.status_code
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): print "OSCARS: HELD FAILED: ", resp._content
             raise Exception('OSCARS Cannot HELD: {}'.format(resp.status_code))

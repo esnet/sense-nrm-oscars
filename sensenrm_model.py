@@ -260,7 +260,7 @@ class nrmModel(object):
                 sport=sname[2]
                 dvlan = mydeltavlan.split(",")
                 durs = mydeltaurs.split(",")
-                if (nrm_config["debug"]>8): 
+                if (nrm_config["debug"]>7): 
                     print "MODEL: mydeltavlan:", mydeltavlan
                     print "MODEL: mydvlan:", dvlan
                 dvi = dvlan.index(sport)
@@ -290,7 +290,7 @@ class nrmModel(object):
 
         if (nrm_config["debug"]>4):
             print '[{"id":', str(self.getUUID()),',"href":', str(self.getURL()),',"creationTime":', str(self.getTime()), '}]', str(self.getTime())
-        #if (nrm_config["debug"]>8):
+        #if (nrm_config["debug"]>7):
         #    print '[{"id":', str(self.getUUID()),',"href":', str(self.getURL()),',"creationTime":', str(self.getTime()),',"model":', str(modelc), '}]', str(self.getTime())
         
         if (nrm_config["debug"]>9):

@@ -310,7 +310,7 @@ class nrmDelta(object):
         gr = None
         gr = rdflib.Graph()
         result = gr.parse(data=deltaContent, format='ttl')
-        if (nrm_config["debug"]>8): print "DELTA: REDUC_LENGTH=", len(gr)
+        if (nrm_config["debug"]>7): print "DELTA: REDUC_LENGTH=", len(gr)
         for subject,predicate,obj in gr:
             #if "urn:ogf:network:es.net:2013::" in str(subject):
             urnsearch = nrm_config["urnprefix"]+"::"
@@ -425,7 +425,7 @@ class nrmDelta(object):
             gac = None
             gac = rdflib.Graph()
             result = gac.parse(data=deltacontent, format='ttl')
-            if (nrm_config["debug"]>8): print "DELTA: LENGTH=", len(gac)
+            if (nrm_config["debug"]>7): print "DELTA: LENGTH=", len(gac)
             for subject,predicate,obj in gac:
                 #if "urn:ogf:network:es.net:2013::" in str(subject):
                 urnsearch = nrm_config["urnprefix"]+"::"
@@ -454,7 +454,7 @@ class nrmDelta(object):
                             else:
                                 dsw = delta_switch(sid=djunction, did=nrmargs['id'], mid=nrmargs['modelId'], bw=int(obj), vport=tvport)
                                 dict_switches[djunction] = dsw
-                                if (nrm_config["debug"]>8):
+                                if (nrm_config["debug"]>7):
                                     print "DELTA: ADD_SWITCH_LIST=", djunction
                                 if not (junction in list_junctions):
                                     list_junctions.append(junction)
@@ -465,7 +465,7 @@ class nrmDelta(object):
                                 list_switches.append(djunction)
                         
                         elif "unit" in str(predicate):
-                            if (nrm_config["debug"]>8):
+                            if (nrm_config["debug"]>7):
                                 print "DELTA: JUNCTION=", djunction
                                 print "DELTA: unit=", obj
 
@@ -484,7 +484,7 @@ class nrmDelta(object):
                             else:
                                 dsw = delta_switch(sid=djunction, did=nrmargs['id'], mid=nrmargs['modelId'], bw=0, vport=int(obj))
                                 dict_switches[djunction] = dsw
-                                if (nrm_config["debug"]>8):
+                                if (nrm_config["debug"]>7):
                                     print "DELTA: ADD_SWITCH_LIST=", djunction
                                 if not (junction in list_junctions):
                                     list_junctions.append(junction)

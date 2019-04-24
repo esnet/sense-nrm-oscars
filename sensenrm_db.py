@@ -1175,13 +1175,13 @@ def insert_held_value(s, id, key, value):
     
 def display_db(s):
     allJunctions = s.query(oJunction).all();
-    if (nrm_config["debug"]>8): print "\nDB: num junctions = ", len(allJunctions)
+    if (nrm_config["debug"]>7): print "\nDB: num junctions = ", len(allJunctions)
     jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth} for f in allJunctions]
     if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
 
     allHelds = s.query(oHeld).all();
-    if (nrm_config["debug"]>8): print "\nDB: num helds = ", len(allHelds);
+    if (nrm_config["debug"]>7): print "\nDB: num helds = ", len(allHelds);
     hDetails = [{"id": t.id, "id_name": t.pipe_a.id, "name": t.pipe_a.name, "vlan_expression":t.pipe_a.vlan_expression} for t in allHelds]
     if (nrm_config["debug"]>9): print (json.dumps(hDetails, indent = 4))
-    if (nrm_config["debug"]>8): print "DB: Printed database successfully"
+    if (nrm_config["debug"]>7): print "DB: Printed database successfully"
 
