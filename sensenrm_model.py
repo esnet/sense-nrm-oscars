@@ -230,7 +230,7 @@ class nrmModel(object):
                         mydeltavlan = str(mObj.vlanport)
                     if (nrm_config["debug"]>6): 
                         print "MODEL_DELTA_ID=", mDelta.id
-                        print "MODEL_DELTA_MY=", mydeltaid
+                        print "MODEL_DELTA_ID_MY=", mydeltaid
                         print "MODEL_DELTA_VLAN_MY=", mydeltavlan
 
                     if addToModel:

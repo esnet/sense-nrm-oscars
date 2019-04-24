@@ -456,6 +456,10 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
     if mObj is None:
         if (nrm_config["debug"]>6): print "DB: active delta NOT_FOUND=", did
     else:
+        # Cancel equivalent
+        update_switch(s, did, 0)
+        remove_junction_bidports_with_delta(s, did)
+
         miObj = s.query(oiDelta).filter(oiDelta.id == did).first()
         if miObj is None:
             #timenow = datetime.utcnow()
@@ -467,7 +471,7 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
             oj.held_history = mObj.heldid
             timehistory = mObj.time_begin + ":" + mObj.time_end
             oj.time_history = timehistory
-            if not cancelled: 
+            if cancelled: 
                 oj.cancelid = cid
             s.add(oj)
             if (nrm_config["debug"]>6): print "DB: inactive delta added=", did
@@ -479,12 +483,12 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
             miObj.held_history = heldhistory
             timehistory = miObj.time_history + "," + mObj.time_begin + ":" + mObj.time_end
             miObj.time_history = timehistory
-            if not cancelled: 
+            if cancelled: 
+                miObj.status = "CANCELLED"
                 miObj.cancelid = cid
+            else:
+                miObj.status = "EXPIRED"
             s.add(miObj)
-        # Cancel equivalent
-        update_switch(s, did, 0)
-        remove_junction_bidports_with_delta(s, did)
         # Delete from the active deltas list
         s.delete(mObj)
         s.commit()
@@ -508,9 +512,9 @@ def get_time_diff(time_to_compare, current_time):
     return td.total_seconds()
 
 def remove_expired_deltas(s):
-    if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTAS"
     allDeltas = s.query(oDelta).all()
     if len(allDeltas) > 0:
+        if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTAS"
         current_time = datetime.now(utc)
         if (nrm_config["debug"]>6):
             print "DB: IS_EXPIRED_NOWTIME=", current_time
@@ -527,14 +531,14 @@ def remove_expired_deltas(s):
                     print "DB: IS_EXPIRED_ENDTIME=", f.time_end
                 insert_idelta_remove_delta(s, f.id, False, "")
     else:
-        if (nrm_config["debug"]>4): print "DB: NO active deltas"
+        if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTAS NO_ACTIVE_DELTAS"
 
 def remove_expired_delta(s, did):
     if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTA:", did
     resp_status = False
     mObj = s.query(oDelta).filter(oDelta.id == did).first()
     if mObj is None:
-        if (nrm_config["debug"]>6): print "DB: NO active delta:", did
+        if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTA NOT_FOUND:", did
     else:
         current_time = datetime.now(utc)
         time_to_compare = mObj.time_end
@@ -888,28 +892,31 @@ def remove_junction_bidports_with_delta(s, nrm_deltaid):
     mObj = s.query(oDelta).filter(oDelta.id == nrm_deltaid).first()
     if mObj is None:
         raise ValueError("No DeltaID found.")
-    plist = mObj.switch_list.split(",")
-    dbf = False
-    for sw in plist:
-        jids = sw.split(":")
-        jid = jids[0]+":"+jids[1]
-        mObj = s.query(oJunction).filter(oJunction.id == jid).first()
-        if mObj is not None:
-            bports = mObj.bidports.split(",")
-            for sw2 in plist:
-                sw3 = nrm_deltaid + ":" + sw2
-                if (sw3  in bports):
-                    bports.remove(sw3)
-            newbports = ""
-            for bp in bports:
-                newbports = newbports + bp
-                if bports.index(bp) != len(bports)-1:
-                    newbports = newbports + ','
-            mObj.bidports = newbports
-            s.add(mObj)
-            dbf = True
-    if (dbf):
-        s.commit()
+    if (len(mObj.switch_list) > 0):
+        plist = mObj.switch_list.split(",")
+        dbf = False
+        for sw in plist:
+            jids = sw.split(":")
+            jid = jids[0]+":"+jids[1]
+            mObj = s.query(oJunction).filter(oJunction.id == jid).first()
+            if mObj is not None:
+                bports = mObj.bidports.split(",")
+                for sw2 in plist:
+                    sw3 = nrm_deltaid + ":" + sw2
+                    if (sw3  in bports):
+                        bports.remove(sw3)
+                newbports = ""
+                for bp in bports:
+                    newbports = newbports + bp
+                    if bports.index(bp) != len(bports)-1:
+                        newbports = newbports + ','
+                mObj.bidports = newbports
+                s.add(mObj)
+                dbf = True
+        if (dbf):
+            s.commit()
+    else:
+        if (nrm_config["debug"]>6): print "DB: REMOVE_JUNCTION NO_SWITCH_LIST"
 
 #def remove_junction_bidports(s, id, plist):
 #    # id = junction id
