@@ -239,8 +239,25 @@ class nrmDelta(object):
                     if not active_delta_status:
                         if (nrm_config["debug"]>2): print "DELTA: STATUS_ID:"+nrm_deltaid+":NOT_ATIVE"
                         idelta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.id == nrm_deltaid).first()
-                        phase = idelta.status
-                        return 200, phase
+                        if idelta is None:
+                            if (nrm_config["debug"]>2): print "DELTA: iSTATUS_ID_NOT_FOUND=", nrm_deltaid
+                            idelta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.altid == nrm_deltaid).first()
+                            if idelta is None:
+                                if (nrm_config["debug"]>2): print "DELTA: iSTATUS_ALTID_NOT_FOUND=", nrm_deltaid
+                                idelta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.cancelid == nrm_deltaid).first()
+                                if idelta is None:
+                                    if (nrm_config["debug"]>2): print "DELTA: iSTATUS_CANCELID_NOT_FOUND=", nrm_deltaid
+                                    phase = "ERROR_DELTAID_NOT_FOUND"
+                                    return 201, phase
+                                if (nrm_config["debug"]>2): print "DELTA: iSTATUS_CANCELID_FOUND=", nrm_deltaid
+                                phase = idelta.status
+                                return 200, phase
+                            else:
+                                phase = idelta.status
+                                return 200, phase
+                        else:
+                            phase = idelta.status
+                            return 200, phase
 
                     phase = "ERROR_DELTAID_NOT_FOUND"
                     return 201, phase
