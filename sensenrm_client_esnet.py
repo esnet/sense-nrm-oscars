@@ -5,7 +5,7 @@
 # U.S. Dept. of Energy).  All rights reserved.
 #
 # If you have questions about your rights to use or distribute this
-# software, please contact Berkeley Lab's Innovation & Partnerships
+# software, please contact Berkeley Lab Innovation & Partnerships
 # Office at IPO@lbl.gov.
 #
 # NOTICE.  This Software was developed under funding from the
@@ -36,8 +36,8 @@ optional arguments:
   --cert CERT_PATH      User certificate path. Must be paired with --key.
   --key KEY_PATH        User certificate key path. Must be paired with --cert.
   -s NRMSERVICE_ENDPOINT, --service NRMSERVICE_ENDPOINT
-                        NRM service endpoint info. e.g. dev-sense-
-                        nrm.es.net:443
+                        NRM service endpoint info. 
+                        e.g. dev-sense-nrm.es.net:443
   --info                Collect service info over SSL. Default=False
   --sslinfo             Collect service info over SSL. Default=False
   --models              Get Models. Default=False
@@ -60,7 +60,7 @@ optional arguments:
   --bandwidth BANDWIDTH
                         Connection bandwidth in Mbps
   --duration DURATION   Connection duration in hours
-  --submit-commit       Request submition and commit. Default=False
+  --create-commit       Request creation, submission and commit. Default=False
   --release RELEASEID   Release and terminate the request. requires request ID
   --collectall          Collect all active request IDs. Default=False
   --cancelall           Cancel all active requests. Default=False
@@ -100,13 +100,13 @@ import zlib
 ### If you know the below iterms, you may want to update them 
 ###    so that you do not need those command options
 capath = './certs'
-mycerts = ('./esnetsim-user-cert.pem', 'esnetsim-user-key.pem')
+mycerts = ('./esnetsim-user-cert.pem', './esnetsim-user-key.pem')
 ### proxy is not used currently
-### myproxy = '/esnetsim-user-proxy'
+### myproxy = './esnetsim-user-proxy'
 ################################################################
-### If you know what's happening, you may want to edit the followings
-switches = ["netlab-mx960-rt1:xe-11_2_0", "netlab-7750sr12-rt1:9_1_1"]
-ports = ["2040", "2040"]
+### If you know what is happening, you may want to edit the followings
+switches = ["netlab-mx960-rt2:xe-0_0_0", "netlab-7750sr12-rt2:10_1_5"]
+ports = ["2010", "2010"]
 ### 1 Gbps in bps
 bandwidth="1000000000" # in bps = 1Gbps
 #############################################
@@ -115,7 +115,7 @@ urnprefix = "urn:ogf:network:es.net:2019"
 ################################################################
 ################################################################
 # Do NOT edit below this line
-versioninfo = "NRM client v1.0.1 on Apr 22, 2019"
+versioninfo = "NRM client v1.0 on Apr 25, 2019"
 urllib3.disable_warnings(urllib3.exceptions.SubjectAltNameWarning)
 debug=False
 
@@ -197,6 +197,29 @@ def data_b64decode_gunzip(tcontent):
     unzipped_data = zlib.decompress(base64.b64decode(tcontent), 16+zlib.MAX_WBITS)
     return unzipped_data
 
+# output of json
+#def dump(obj, nested_level=0, output=sys.stdout):
+#    spacing = '   '
+#    if type(obj) == dict:
+#        print >> output, '%s{' % ((nested_level) * spacing)
+#        for k, v in obj.items():
+#            if hasattr(v, '__iter__'):
+#                print >> output, '%s%s:' % ((nested_level + 1) * spacing, k)
+#                dump(v, nested_level + 1, output)
+#            else:
+#                print >> output, '%s%s: %s' % ((nested_level + 1) * spacing, k, v)
+#        print >> output, '%s}' % (nested_level * spacing)
+#    elif type(obj) == list:
+#        print >> output, '%s[' % ((nested_level) * spacing)
+#        for v in obj:
+#            if hasattr(v, '__iter__'):
+#                dump(v, nested_level + 1, output)
+#            else:
+#                print >> output, '%s%s' % ((nested_level + 1) * spacing, v)
+#        print >> output, '%s]' % ((nested_level) * spacing)
+#    else:
+#        print >> output, '%s%s' % (nested_level * spacing, obj)
+#
 def dump(obj, nested_level=0):
     spacing = '   '
     if type(obj) == dict:
@@ -204,7 +227,7 @@ def dump(obj, nested_level=0):
         for k, v in obj.items():
             if hasattr(v, '__iter__'):
                 print('%s%s:' % ((nested_level + 1) * spacing, k))
-                dump(v, nested_level + 1, output)
+                dump(v, nested_level + 1)
             else:
                 print('%s%s: %s' % ((nested_level + 1) * spacing, k, v))
         print('%s}' % (nested_level * spacing))
@@ -212,7 +235,7 @@ def dump(obj, nested_level=0):
         print('%s[' % ((nested_level) * spacing))
         for v in obj:
             if hasattr(v, '__iter__'):
-                dump(v, nested_level + 1, output)
+                dump(v, nested_level + 1)
             else:
                 print('%s%s' % ((nested_level + 1) * spacing, v))
         print('%s]' % ((nested_level) * spacing))
@@ -241,19 +264,29 @@ def get_sslinfo():
     myprint("NRM sslinfo status: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/sslinfo Error: {}'.format(resp.status_code))
+    #print("heressl: " + str(resp.headers['content-type']))
     print("NRM sslinfo response: " +str(resp._content))
 
 def get_models():
     myheaders = {'If-Modified-Since': time_rfc1123() }
     resp = requests.get(_surl('/models?current=true&summary=false&encode=false'), cert=mycerts, verify=capath)
     myprint("NRM models status: " + str(resp.status_code))
-    if resp.status_code != 200:
-        raise Exception('/models Error: {}'.format(resp.status_code))
+    if resp.status_code == 304:
+        myprint("NRM models response header: " + str(resp.headers))
+        myprint("NRM models response content: " + str(resp._content))
+        #myprint("NRM models response header Last-Modified: " + str(resp.headers['Last-Modified']))
+        #myprint("NRM models response header content-type: " + str(resp.headers['content-type']))
+        dump(resp.json())
+        return True
+    #elif resp.status_code != 200:
+    #    raise Exception('/models Error: {}'.format(resp.status_code))
     myprint("NRM models result: " + str(resp.headers['content-type']))
+    myprint("NRM models result headers: " + str(resp.headers))
     models=resp.json()
 
     sys.stdout = open('models-'+get_my_time()+'.txt', 'w')
     dump(resp.json())
+    return True
     
 def get_model(model_id):
     resp = requests.get(_surl('/models/{:d}'.format(model_id)), cert=mycerts, verify=capath)
@@ -373,6 +406,14 @@ def compose_delta(swithes, ports, bandwidth, duration, urnprefix, deltaid):
     if len(switches) == 2:
         pair_num = 2
 
+    # <urn:ogf:network:es.net:2019::netlab-mx960-rt1:xe-11_2_0:+:vlanport+2687:service+bw>
+    # <http://schemas.ogf.org/mrs/2013/12/topology#reservableCapacity> "1000000000"^^xsd:long ;
+    # <urn:ogf:network:es.net:2019::netlab-mx960-rt1:xe-11_2_0:+:vlanport+2687> "2589"
+    # <urn:ogf:network:es.net:2013::ServiceDomain:EVTS.A-GOLE:subnet+vlan-2010:lifetime>
+    #       nml:end             "2018-06-27T10:37:01.000-0400"^^xsd:string  ;
+    #       nml:start            "2018-06-24T10:37:01.000-0400"^^xsd:string  .
+    # <urn:ogf:network:es.net:2019::ServiceDomain:EVTS.A-GOLE:conn+be01868d-c851-49fa-a88a-4e2e3f687bfe:resource+links-connection_1_2:vlan+2589>
+
     # initializes the parts of the file
     beg_part = '@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n    @prefix owl:   <http://www.w3.org/2002/07/owl#> .\n    @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .\n    @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .\n    @prefix nml:   <http://schemas.ogf.org/nml/2013/03/base#> .\n    @prefix mrs:   <http://schemas.ogf.org/mrs/2013/12/topology#> .\n\n    <urn:ogf:network:es.net:2018::ServiceDomain:EVTS.A-GOLE>\n           mrs:providesSubnet <' + urnprefix + '::ServiceDomain:EVTS.A-GOLE:subnet+vlan-' + ports[0] + '>.\n\n    <urn:ogf:network:es.net:2018::ServiceDomain:EVTS.A-GOLE:subnet+vlan-' + ports[0] + '> \n           a                  mrs:SwitchingSubnet ;\n           nml:existsDuring <' + urnprefix + '::ServiceDomain:EVTS.A-GOLE:subnet+vlan-' + ports[0] + ':lifetime>;\n            nml:labelSwapping         true ;\n            nml:encoding              <http://schemas.ogf.org/nml/2012/10/ethernet> ;\n            nml:labeltype             <http://schemas.ogf.org/nml/2012/10/ethernet#vlan> ;\n            nml:hasBidirectionalPort '
     bandwidth_part = ''
@@ -380,7 +421,7 @@ def compose_delta(swithes, ports, bandwidth, duration, urnprefix, deltaid):
 
     # creates the parts of the file
     for x in range(0, pair_num):
-        myprint(switches[x]+"="+ports[x])
+        myprint("SWITCH: " + switches[x]+":"+ports[x])
         beg_part += '<' + urnprefix + '::' + switches[x] + ':+:vlan+' + ports[x] + '>'
         if x != pair_num - 1:
             beg_part+= ', '
@@ -440,12 +481,15 @@ clearid = ""
 cancelid = ""
 
 releaseid = ""
-submit_commit = False
+create_commit = False
 collectall = False
 cancelall = False
 testall = False
 
 duration = 2 # hours
+#switches=[]
+#ports=[]
+#bandwidth="1000000" # in bps
 
 parser = argparse.ArgumentParser(description='SENSE NRM-OSCARS Client Command-line Tool')
 parser.add_argument("-v", "--version", action="store_true", dest="versioninfo", required=False, help="version info")
@@ -477,7 +521,7 @@ parser.add_argument("--bandwidth", action="store", dest="bandwidth", required=Fa
 parser.add_argument("--duration", action="store", dest="duration", required=False, help="Connection duration in hours")
 # --one switch vlan e.g. --one netlab-mx960-rt1:xe-11_2_0 2010 --bandwidth 3000 (in Mbps)
 
-parser.add_argument("--submit-commit", action="store_true", dest="submit_commit", required=False, help="Request submition and commit. Default=False") 
+parser.add_argument("--create-commit", action="store_true", dest="create_commit", required=False, help="Request creation, submission and commit. Default=False") 
 parser.add_argument("--release", action="store", dest="releaseid", required=False, help="Release and terminate the request. requires request ID")
 
 parser.add_argument("--collectall", action="store_true", dest="collectall", required=False, help="Collect all active request IDs. Default=False") 
@@ -523,8 +567,8 @@ if (args.clearid):
 if (args.cancelid):
     cancelid = args.cancelid
 
-if (args.submit_commit):
-    submit_commit = args.submit_commit
+if (args.create_commit):
+    create_commit = args.create_commit
     postdeltasa = False
 if (args.releaseid):
     releaseid = args.releaseid
@@ -533,8 +577,10 @@ if (args.collectall):
     collectall = True
 if (args.cancelall):
     cancelall = True
+
 if (args.testall):
     testall = True
+    postdeltasa = False
 
 if (args.fromswitch):
     switches = [args.fromswitch[0], args.toswitch[0]]
@@ -608,33 +654,30 @@ if (cancelid):
     myprint('NRM cancel DONE')
 
 ### Request Submit and Commit
-if (submit_commit):
-    print("NRM Request Submit and Commit: " + str(service_end_point()))
-    myprint("\t Service prefix: " + urnprefix)
-    myprint("\t" + str(get_my_time()))
-    myprint("\n")
+if (create_commit):
+    print("### NRM Request Submit and Commit: " + str(service_end_point()))
+    myprint("\tService prefix: " + urnprefix)
+    myprint("\tDate/time: " + str(get_my_time()))
     myprint("############################################")
-    myprint("NRM SSLINFO")
-    if (debug): get_sslinfo()
-    myprint("\n")
+    if (debug): 
+        print("### NRM SSLINFO")
+        get_sslinfo()
+        print("############################################")
 
-    print("############################################")
     myuuid = getUUID()
-    print("NRM RequestID: " + str(myuuid))
-    print("\n")
+    print("### NRM RequestID: " + str(myuuid))
     
     myprint("############################################")
-    print("NRM Request")
+    print("### NRM Request")
     delta_content = ""
     if (args.inputfile):
         delta_content = read_delta(inputfile)
     else:
         delta_content = compose_delta(switches, ports, bandwidth, duration, urnprefix, myuuid)
     post_deltas_request(delta_content, myuuid, reduction)
-    print("\n")
 
     print("############################################")
-    print("NRM Request COMMIT")
+    print("### NRM Request COMMIT")
     commit_result = commit_delta(myuuid)
     if not commit_result:
         print("NRM Request Commit Error, and execute Clear")
@@ -642,36 +685,31 @@ if (submit_commit):
         if not clear_result:
             print('NRM Request CLEAR ERROR')
         print('NRM Request CLEAR DONE after Commmit Error')
-    print("\n")
 
     print("############################################")
-    print("NRM Request SUMMARY")
+    print("### NRM Request SUMMARY")
     status_delta(myuuid)
-    print("NRM RequestID: " + str(myuuid))
     print("\n")    
+    print("NRM RequestID: " + str(myuuid))
 
 ### Request Terminate
 if (releaseid):
-    print("NRM Request Release and Terminate: " + service_end_point())
-    myprint("\t Service prefix: " + urnprefix)
-    myprint("\t" + str(get_my_time()))
-    myprint("\n")
+    print("### NRM Request Release and Terminate: " + service_end_point())
+    myprint("\tService prefix: " + urnprefix)
+    myprint("\tDate/time: " + str(get_my_time()))
     myprint("############################################")
-    myprint("NRM SSLINFO")
-    if (debug): get_sslinfo()
-    myprint("\n\n")
+    if (debug): 
+        print("### NRM SSLINFO")
+        get_sslinfo()
+        print("############################################")
 
-    print("############################################")
-    print("NRM Request CANCEL ID: " + str(releaseid))
+    print("### NRM RequestID for CANCEL: " + str(releaseid))
     cancel_delta(releaseid)
-    print("\n")
     
     print("############################################")
-    print("NRM Request SUMMARY")
+    print("### NRM Request SUMMARY")
     status_delta(releaseid)
-    print("\n")
     
-    myprint('NRM Request Release and Terminate DONE')
 
 ######################################################################
 # Adminisgrative functions
@@ -689,21 +727,20 @@ if (cancelall):
 
 ### Testing all interfaces sequentially
 if (testall):
-    print("NRM Service Testing: " +str(service_end_point()))
-    myprint("\t Service prefix: " + urnprefix)
-    myprint("\t" + str(get_my_time()))
-    myprint("\n")
-    myprint("############################################")
-    myprint("NRM_test SSLINFO: " + service_end_point() + "/sslinfo")
-    if (debug): get_sslinfo()
-    myprint("\n")
+    print("### NRM Service Testing: " +str(service_end_point()))
+    print("\tService prefix: " + urnprefix)
+    print("\tDate/time: " + str(get_my_time()))
+    print("############################################")
+    print("### NRM_test SSLINFO: " + service_end_point() + "/sslinfo")
+    get_sslinfo()
+    print("\n")
 
     print("############################################")
-    print("NRM_test MODELS: " + _surl('/models?current=true&summary=false&encode=false'))
+    print("### NRM_test MODELS: " + _surl('/models?current=true&summary=false&encode=false'))
     try:
         get_models()
     except Exception as e:
-        if (debug): print "MODELs Error EXCEPT: ", e
+        print "MODELs Error EXCEPT: ", e
     #if resp.status_code != 200:
     #    print("MODEL_FAILED: " + str(resp.status_code))
     #else:
@@ -714,7 +751,7 @@ if (testall):
 
     print("############################################")
     myuuid = getUUID()
-    print("NRM_test REQUEST DELTA ID: " + str(myuuid))
+    print("### NRM_test REQUESTID: " + str(myuuid))
     print("\n")
     
     print("############################################")
@@ -728,7 +765,7 @@ if (testall):
     print("\n")
 
     print("############################################")
-    print("NRM_test COMMIT: " + str(_surl('/deltas/'+myuuid+'/actions/commit')))
+    print("### NRM_test COMMIT: " + str(_surl('/deltas/'+myuuid+'/actions/commit')))
     commit_result = commit_delta(myuuid)
     if not commit_result:
         print("NRM_test CLEAR_with_COMMIT_ERROR: " + _surl('/deltas/'+myuuid+'/actions/clear'))
@@ -739,16 +776,23 @@ if (testall):
     print("\n")
 
     print("############################################")
-    print("NRM_test SUMMARY: " + _surl('/deltas/'+myuuid+'?summary=true'))
+    print("### NRM_test SUMMARY: " + _surl('/deltas/'+myuuid+'?summary=true'))
     status_delta(myuuid)
     print("\n")
 
     print("############################################")
     if commit_result:
-        print("NRM_test CANCEL: " + _surl('/deltas/'+myuuid+'/actions/cancel'))
+        print("Timing 5 seconds before CANCEL")
+        time.sleep(5)
+        print("### NRM_test CANCEL: " + _surl('/deltas/'+myuuid+'/actions/cancel'))
         cancel_delta(myuuid)
         print("\n")
     
-    print("NRM_test REQUEST ID: " + str(myuuid))
-    print('NRM_test ALL_TEST DONE')
+    print("### NRM_test REQUEST ID: " + str(myuuid))
+    print('### NRM_test ALL_TEST DONE')
 
+    #print("############################################")
+    #print("NRM_test CLEAR: " + _surl('/deltas/'+myuuid+'/actions/clear'))
+    #clear_hold(myuuid)
+    #print("CLEAR_DONE: " + str(resp.status_code))
+    #print("\n\n")
