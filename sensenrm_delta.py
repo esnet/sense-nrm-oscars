@@ -250,7 +250,7 @@ class nrmDelta(object):
                                     phase = "ERROR_DELTAID_NOT_FOUND"
                                     return 201, phase
                                 if (nrm_config["debug"]>2): print "DELTA: iSTATUS_CANCELID_FOUND=", nrm_deltaid
-                                phase = idelta.status
+                                phase = "COMMITTED" # instead of idelta.status
                                 return 200, phase
                             else:
                                 phase = idelta.status
