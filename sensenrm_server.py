@@ -186,15 +186,16 @@ class ModelsAPI(Resource):
                     #return myresp
                 else:
                     if (nrm_config["debug"]>3): print "SVC: MODELS NO_CHANGES HERE"
-                    my_lasttime = time_rfc1123_from_datetime(last_modtime)
-                    mymodels = [{"id":str(""),"href":str(""),"creationTime":str(time_rfc1123()),"model":str("")}]
-                    mycontent = marshal(mymodels, model_fields)
-                    myresp = make_response(jsonify(mycontent))
-                    myresp.headers["Last-Modified"] = str(my_lasttime)
-                    myresp.headers["content-type"] = "application/json"
-                    myresp.status_code = 200
-                    #myresp.status_code = 304
-                    return myresp
+                    return {'model': str("NO_CHANGES")}, 304
+                    #my_lasttime = time_rfc1123_from_datetime(last_modtime)
+                    #mymodels = [{"id":str(""),"href":str(""),"creationTime":str(time_rfc1123()),"model":str("")}]
+                    #mycontent = marshal(mymodels, model_fields)
+                    #myresp = make_response(jsonify(mycontent))
+                    #myresp.headers["Last-Modified"] = str(my_lasttime)
+                    #myresp.headers["content-type"] = "application/json"
+                    #myresp.status_code = 200
+                    ##myresp.status_code = 304
+                    #return myresp
             else:
                 mymodels = "UNAUTHORIZED_USER"
                 if (nrm_config["debug"]>3): print "SVC: MODELS 403 INVALID_USER"
