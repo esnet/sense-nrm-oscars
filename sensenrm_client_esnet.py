@@ -100,9 +100,9 @@ import zlib
 ### If you know the below iterms, you may want to update them 
 ###    so that you do not need those command options
 capath = './certs'
-mycerts = ('./esnetsim-user-cert.pem', './esnetsim-user-key.pem')
+mycerts = ('./usercert.pem', './userkey.pem')
 ### proxy is not used currently
-### myproxy = './esnetsim-user-proxy'
+### myproxy = './userproxy'
 ################################################################
 ### If you know what is happening, you may want to edit the followings
 switches = ["netlab-mx960-rt2:xe-0_0_0", "netlab-7750sr12-rt2:10_1_5"]
@@ -740,7 +740,7 @@ if (testall):
     try:
         get_models()
     except Exception as e:
-        print "MODELs Error EXCEPT: ", e
+        print("MODELs Error EXCEPT: " +str(e))
     #if resp.status_code != 200:
     #    print("MODEL_FAILED: " + str(resp.status_code))
     #else:
