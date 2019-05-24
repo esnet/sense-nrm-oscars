@@ -740,7 +740,7 @@ if (testall):
     try:
         get_models()
     except Exception as e:
-        print("MODELs Error EXCEPT: " +str(e))
+        print("MODELs Error EXCEPT: " + str(e))
     #if resp.status_code != 200:
     #    print("MODEL_FAILED: " + str(resp.status_code))
     #else:
