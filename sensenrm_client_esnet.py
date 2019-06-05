@@ -100,9 +100,9 @@ import zlib
 ### If you know the below iterms, you may want to update them 
 ###    so that you do not need those command options
 capath = './certs'
-mycerts = ('./esnetsim-user-cert.pem', './esnetsim-user-key.pem')
+mycerts = ('./usercert.pem', './userkey.pem')
 ### proxy is not used currently
-### myproxy = './esnetsim-user-proxy'
+### myproxy = './userproxy'
 ################################################################
 ### If you know what is happening, you may want to edit the followings
 switches = ["netlab-mx960-rt2:xe-0_0_0", "netlab-7750sr12-rt2:10_1_5"]
@@ -115,7 +115,7 @@ urnprefix = "urn:ogf:network:es.net:2019"
 ################################################################
 ################################################################
 # Do NOT edit below this line
-versioninfo = "NRM client v1.0 on Apr 25, 2019"
+versioninfo = "NRM client v1.0.2 on May 28, 2019"
 urllib3.disable_warnings(urllib3.exceptions.SubjectAltNameWarning)
 debug=False
 
@@ -270,13 +270,14 @@ def get_sslinfo():
 def get_models():
     myheaders = {'If-Modified-Since': time_rfc1123() }
     resp = requests.get(_surl('/models?current=true&summary=false&encode=false'), cert=mycerts, verify=capath)
-    myprint("NRM models status: " + str(resp.status_code))
+    print("NRM models status: " + str(resp.status_code))
     if resp.status_code == 304:
         myprint("NRM models response header: " + str(resp.headers))
         myprint("NRM models response content: " + str(resp._content))
         #myprint("NRM models response header Last-Modified: " + str(resp.headers['Last-Modified']))
         #myprint("NRM models response header content-type: " + str(resp.headers['content-type']))
-        dump(resp.json())
+        if (len(str(resp._content)) > 0):
+            dump(resp.json())
         return True
     #elif resp.status_code != 200:
     #    raise Exception('/models Error: {}'.format(resp.status_code))
@@ -286,6 +287,7 @@ def get_models():
 
     sys.stdout = open('models-'+get_my_time()+'.txt', 'w')
     dump(resp.json())
+    sys.stdout = sys.__stdout__
     return True
     
 def get_model(model_id):
@@ -297,6 +299,7 @@ def get_model(model_id):
 
     sys.stdout = open('model-'+get_my_time()+'.txt', 'w')
     dump(resp.json())
+    sys.stdout = sys.__stdout__
     
 def post_deltas_request(deltacontent, deltaid, reduction):
     if reduction: # delta reduction = cancel
@@ -740,7 +743,7 @@ if (testall):
     try:
         get_models()
     except Exception as e:
-        print "MODELs Error EXCEPT: ", e
+        print("MODELs Error EXCEPT: " + str(e))
     #if resp.status_code != 200:
     #    print("MODEL_FAILED: " + str(resp.status_code))
     #else:

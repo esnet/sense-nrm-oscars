@@ -82,6 +82,19 @@ def convert_str_to_datetime(mystr):
     dt = dt_utc.replace(tzinfo=FixedOffset(tz))
     return dt
 
+class nrmSys (Base):
+    __tablename__ = "nrmsys"
+
+    id = Column(String, primary_key=True)
+    last_model_time = Column(DateTime) # DateTime e.g. datetime.utcnow(), mObj.time_begin.strftime('%Y-%m-%d %H:%M:%S')
+    model_changed = Column(Integer) # 0/1 
+                                    # 1 when expired/terminated/cancelled/initialized
+                                    # 0 when a new model is captured as last_model
+    last_id = Column(String)
+    last_href = Column(String)
+    last_creationtime = Column(String)
+    last_model= Column(String)
+
 class oUser(Base):
     # User list for NRM access
     __tablename__ = "user"
@@ -260,6 +273,7 @@ class oDelta(Base):
     held_history = Column(String)
     status = Column(String) # REQUESTED, COMMITTED, CANCELED, EXPIRED
     held_id = Column(String, ForeignKey("held.id"))
+    additional_info = Column(String) # for exception string for failed HOLD. keep adding.
 
 class oiDelta(Base):
     __tablename__ = "inactivedelta"
@@ -280,6 +294,7 @@ class oiDelta(Base):
     held_history = Column(String)
     status = Column(String) # REQUESTED, COMMITTED, CANCELED, EXPIRED
     held_id = Column(String, ForeignKey("held.id"))
+    additional_info = Column(String) # for exception string for failed HOLD. keep adding.
 
 class DB(object):
     def __init__(self, config):
@@ -368,6 +383,17 @@ def initialize_db():
             mydn = oscars_config["default_dn"]
     
         with db_session() as s:
+            mObj = s.query(nrmSys).filter(nrmSys.id == "default").first()
+            last_time = datetime.now()
+            if mObj is None:
+                ns  = nrmSys(id="default", last_model_time=last_time, model_changed=1, last_id="", last_href="", last_creationtime="", last_model="") 
+                s.add(ns)
+            else:
+                mObj.last_model_time = last_time
+                mObj.model_changed = 1
+                s.add(mObj)
+            s.commit()
+
             insert_group(s, "default", userid, password, mytoken, mydn)
             create_userslist(s)  ## Creating users list with mapfile
     
@@ -379,6 +405,47 @@ def deactivate_user(s, uid):
 def activate_user(s, uid):
     insert_user_value(s, uid, "active", 1)
     
+def get_sys_lasttime(s):
+    mObj = s.query(nrmSys).filter(nrmSys.id == "default").first()
+    if mObj is None:
+        raise ValueError("DB: NO nrmSys found.")
+    return mObj.last_model_time
+
+def get_sys_lastmodel(s):
+    mObj = s.query(nrmSys).filter(nrmSys.id == "default").first()
+    if mObj is None:
+        raise ValueError("DB: NO nrmSys found.")
+    return mObj.last_id, mObj.last_href, mObj.last_creationtime, mObj.last_model
+
+def get_sys_lastchange(s):
+    mObj = s.query(nrmSys).filter(nrmSys.id == "default").first()
+    if mObj is None:
+        raise ValueError("DB: NO nrmSys found.")
+    return mObj.model_changed
+
+def update_sys_value(s, key, value):
+    mObj = s.query(nrmSys).filter(nrmSys.id == "default").first()
+    if mObj is None:
+        raise ValueError("DB: NO nrmSys found.")
+
+    if (key.lower() == "last_model_time"):
+        mObj.last_model_time = value  # DateTime e.g. datetime.now()
+    elif (key.lower() == "last_model"):
+        mObj.last_model = value
+    elif (key.lower() == "last_id"):
+        mObj.last_id = value
+    elif (key.lower() == "last_href"):
+        mObj.last_href = value
+    elif (key.lower() == "last_creationtime"):
+        mObj.last_creationtime = value
+    elif (key.lower() == "model_changed"):
+        mObj.model_changed = value
+    else:
+        if (nrm_config["debug"]>6): print "DB: nrmSys key not found: ", key
+        return "sys key not found"
+    s.add(mObj)
+    s.commit()
+
 def update_switch(s, did, flag):
     if (nrm_config["debug"]>6): print "DB: UPDATE_SWITCH=", did
     mObjs = s.query(oSwitch).filter(oSwitch.deltaid == did).all()
@@ -435,14 +502,14 @@ def insert_switch_value(s, id, key, value):
     s.commit()
 
 
-def insert_delta(s, uid, did, mid, swns, tstart, tend, aid, avlan, durs):
+def insert_delta(s, uid, did, mid, swns, tstart, tend, aid, avlan, durs, hldid):
     if (nrm_config["debug"]>4): print "DB: INSERT_DELTA"
 
     mObj = s.query(oDelta).filter(oDelta.id == did).first()
     if mObj is None:
         #timenow = datetime.utcnow()
         timenow = str(datetime.now(utc))
-        oj = oDelta(id=did, modelid=mid, userid=uid, time_begin=tstart, time_end=tend, creation_date=timenow, switch_list=swns, altid=aid, altvlan=avlan, urs=durs, status="REQUESTED")
+        oj = oDelta(id=did, modelid=mid, userid=uid, time_begin=tstart, time_end=tend, creation_date=timenow, switch_list=swns, altid=aid, altvlan=avlan, urs=durs, status="REQUESTED", heldid=hldid)
         s.add(oj)
         s.commit()
         if (nrm_config["debug"]>6): print "DB: delta added=", did
@@ -467,7 +534,7 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
             mystatus = "CANCELLED"
             if not cancelled: 
                 mystatus = "EXPIRED"
-            oj = oiDelta(id=did, modelid=mObj.modelid, userid= mObj.userid, time_begin=mObj.time_begin, time_end=mObj.time_end, creation_date=timenow, switch_list=mObj.switch_list, altid=mObj.altid, altvlan=mObj.altvlan, heldid=mObj.heldid, urs=mObj.urs, status=mystatus)
+            oj = oiDelta(id=did, modelid=mObj.modelid, userid= mObj.userid, time_begin=mObj.time_begin, time_end=mObj.time_end, creation_date=timenow, switch_list=mObj.switch_list, altid=mObj.altid, altvlan=mObj.altvlan, heldid=mObj.heldid, urs=mObj.urs, status=mystatus, additional_info=mObj.additional_info)
             oj.held_history = mObj.heldid
             timehistory = mObj.time_begin + ":" + mObj.time_end
             oj.time_history = timehistory
@@ -645,6 +712,11 @@ def insert_delta_value(s, id, key, value):
         mObj.switch_list = value
     elif (key.lower() == "held_id"):
         mObj.held_id = value
+    elif (key.lower() == "additional_info"):
+        if len(mObj.additional_info) == 0:
+            mObj.additional_info =  value 
+        else: 
+            mObj.additional_info =  mObj.additional_info + ", " + value 
     else:
         if (nrm_config["debug"]>6): print "DB: delta key not found: ", key
         return "delta key not found"

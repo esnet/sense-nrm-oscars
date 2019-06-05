@@ -174,7 +174,8 @@ class ModelsAPI(Resource):
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
-                mymodels,last_modtime,status = nrmmodels.getModel()
+                mymodels,status = nrmmodels.getModel()
+                #mymodels,last_modtime,status = nrmmodels.getModel()
                 if (nrm_config["debug"]>3): print "SVC: MODELS INIT DONE"
                 if status:
                     if (nrm_config["debug"]>3): print "SVC: MODELS RETURNED"
@@ -186,7 +187,8 @@ class ModelsAPI(Resource):
                     #return myresp
                 else:
                     if (nrm_config["debug"]>3): print "SVC: MODELS NO_CHANGES HERE"
-                    return {'model': str("NO_CHANGES")}, 304
+                    return marshal(mymodels, model_fields)
+                    #return {'model': str("NO_CHANGES")}, 304
                     #my_lasttime = time_rfc1123_from_datetime(last_modtime)
                     #mymodels = [{"id":str(""),"href":str(""),"creationTime":str(time_rfc1123()),"model":str("")}]
                     #mycontent = marshal(mymodels, model_fields)

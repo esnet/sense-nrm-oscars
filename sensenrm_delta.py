@@ -398,6 +398,8 @@ class nrmDelta(object):
                             if (nrm_config["debug"]>2): print "DELTA: CANCELLED_with_400:", status
                         else:
                             if (nrm_config["debug"]>2): print "DELTA: CANCEL_FAILED:", status
+                        with mydb_session() as s:
+                            sensenrm_db.update_sys_value(s, "model_changed", 1)
                     else:
                         status = 500
                         if (not active_delta_status):
@@ -558,11 +560,11 @@ class nrmDelta(object):
                 else:
                     d_mainid = nrmargs['id']
                     d_altid = delta_connp
-                sensenrm_db.insert_delta(s, uid, d_mainid, nrmargs['modelId'], liststr_switches, starttime, endtime, d_altid, delta_avlan, delta_urs)
-                sensenrm_db.insert_delta_value(s, d_mainid, "heldid", connid)
+                sensenrm_db.insert_delta(s, uid, d_mainid, nrmargs['modelId'], liststr_switches, starttime, endtime, d_altid, delta_avlan, delta_urs, connid)
+                #sensenrm_db.insert_delta_value(s, d_mainid, "heldid", connid)
 
-    ############
-    # P2P and Multipoint
+            ############
+            # P2P and Multipoint
             mypce=[]
             if (nrm_config["debug"]>3): 
                 print "DELTA: ### Getting_PCE ###"
@@ -574,6 +576,9 @@ class nrmDelta(object):
                     mypce = oscars_conn.get_pcelist(connid, nrmargs['id'], list_switches, starttime, endtime)
                 except Exception as e:
                     if (nrm_config["debug"]>0): print "DELTA: PCE EXCEPT: ", e
+                    with mydb_session() as s:
+                        sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", str(e))
+                        sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
                     raise
 
             myfix=[]
@@ -591,6 +596,9 @@ class nrmDelta(object):
                 resp = oscars_conn.get_conn_held(connid, nrmargs['id'], dict_switches, mypce, myfix, starttime, endtime, groupid)
             except Exception as e:
                 if (nrm_config["debug"]>0): print "DELTA: HELD EXCEPT: ", e
+                with mydb_session() as s:
+                    sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", str(e))
+                    sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
                 raise
         
             if (resp.status_code == 200):
@@ -600,10 +608,19 @@ class nrmDelta(object):
                         mysw=dict_switches[k]
                         sensenrm_db.insert_switch(s, mysw.deltaid, mysw.id, mysw.vlanport, mysw.reservedbw, starttime, endtime, connid)
                     sensenrm_db.insert_junction_bidports(s, nrmargs['id'], list_switches)
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
+
+                return [{"id":str(nrmargs['id']),"description":str("oscars:"+connid),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content)}], resp.status_code
             else:
                 if (nrm_config["debug"]>3): 
                     print "DELTA: HELD_FAILED_CONTENT=", resp.status_code
                     print "DELTA: HELD_FAILED_CONTENT=", resp._content
+                with mydb_session() as s:
+                    sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", "HELD_FAILED")
+                    sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
+
+                return [{"id":str(nrmargs['id']),"description":str("something_went_wrong_"+str(reductionFlag)),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content)}], resp.status_code
+
             return [{"id":str(nrmargs['id']),"description":str("oscars:"+connid),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content)}], resp.status_code
 
         return [{"id":str(nrmargs['id']),"description":str("something_went_wrong_"+str(reductionFlag)),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":""}], status
