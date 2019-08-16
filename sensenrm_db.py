@@ -289,6 +289,7 @@ class oiDelta(Base):
     time_begin = Column(String)
     time_end = Column(String)
     creation_date = Column(String)
+    active_creation_date = Column(String) # for creation_date when active
     switch_list = Column(String)
     time_history = Column(String)
     held_history = Column(String)
@@ -534,7 +535,7 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
             mystatus = "CANCELLED"
             if not cancelled: 
                 mystatus = "EXPIRED"
-            oj = oiDelta(id=did, modelid=mObj.modelid, userid= mObj.userid, time_begin=mObj.time_begin, time_end=mObj.time_end, creation_date=timenow, switch_list=mObj.switch_list, altid=mObj.altid, altvlan=mObj.altvlan, heldid=mObj.heldid, urs=mObj.urs, status=mystatus, additional_info=mObj.additional_info)
+            oj = oiDelta(id=did, modelid=mObj.modelid, userid= mObj.userid, time_begin=mObj.time_begin, time_end=mObj.time_end, creation_date=timenow, active_creation_date=mObj.creation_date, switch_list=mObj.switch_list, altid=mObj.altid, altvlan=mObj.altvlan, heldid=mObj.heldid, urs=mObj.urs, status=mystatus, additional_info=mObj.additional_info)
             oj.held_history = mObj.heldid
             timehistory = mObj.time_begin + ":" + mObj.time_end
             oj.time_history = timehistory
@@ -546,6 +547,8 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
             if (nrm_config["debug"]>6): print "DB: inactive delta exists=", did
             #timenow = datetime.utcnow()
             timenow = str(datetime.now(utc))
+            creation_date = creation_date + ":" + timenow
+            active_creation_date = active_creation_date + ":" + mObj.creation_date
             heldhistory = miObj.held_history + "," + mObj.heldid
             miObj.held_history = heldhistory
             timehistory = miObj.time_history + "," + mObj.time_begin + ":" + mObj.time_end

@@ -37,12 +37,18 @@ mydb_session = sensenrm_db.db_session
 
 class nrmModel(object):
     basePath = log_config["basepath"]
+    l3vpnPath = ""
     #inputmodel = basePath+"/sensenrm_model_input.txt"
     #last_time = datetime.now()
     
     def __init__(self):
         self.obj=" "
         #self.last_time = self.get_delayed_time(-1)
+        if "l3vpn_model_insert" in nrm_service:
+            print("nrm_service_L3VPN_insert:" + nrm_service["l3vpn_model_insert"])
+            self.l3vpnPath = nrm_service["l3vpn_model_insert"]
+        else:
+            print("nrm_service_L3VPN_insert_does_not_exist")
 
     def getUUID(self):
         nrmmodel_uuid = uuid.uuid5(uuid.NAMESPACE_URL, str(self.getTime()))
@@ -301,6 +307,12 @@ class nrmModel(object):
 
                 if mObjs.index(mObj) != len(mObjs)-1:
                     subninsert = subninsert + ', '
+
+            ## L3VPN static info 190816
+            if ((len(self.l3vpnPath) > 0) and os.path.exists(self.l3vpnPath)):
+                with open(self.l3vpnPath, 'r') as l3vpn_info:
+                    l3vpnInfo = l3vpn_info.read()
+                    modelcontent = modelcontent + l3vpnInfo
 
             ## nml:Toplogy
             modelcontent = modelcontent + '<' + urnpr + ':>\n        a                         nml:Topology ;\n        nml:existsDuring             [ a        nml:Lifetime ;\n                                      nml:end    "' + str(self.get_delayed_time(2)) + '" ; \n                                      nml:start    "' + str(self.getTime()) + '" \n                                     ] ;\n        nml:hasBidirectionalPort  ' + myjlist + ';\n        nml:hasService         <' + urnpr + '::ServiceDomain:EVTS.A-GOLE> ;\n         nml:name         "es.net" ;\n        nml:version         "' + str(self.getTime()) + '" .\n\n'

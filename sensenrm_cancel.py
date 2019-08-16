@@ -116,6 +116,8 @@ class nrmCancel(object):
                     if (nrm_config["debug"]>0): 
                         print "CANCEL_STATUS=", status
                         print "CANCEL_RESP=", resp
+                        print "CANCELALL_TIMEDELAY_60"
+                    time.sleep(60) # time delay 60 seconds for the OSCARS switch reset delay time issue, after "cancel" for committed vlans
             else:
                 if (nrm_config["debug"]>0):
                     print "CANCEL_UNAUTHORIZED_USER: ", uid
@@ -135,6 +137,7 @@ class nrmCancel(object):
             else:
                 alldeltas = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.userid == uid).all()
             result = ""
+            mydelay = False
             if len(alldeltas) > 0:
                 gid = sensenrm_db.get_user_group(s,uid)
                 for delta in alldeltas:
@@ -168,11 +171,16 @@ class nrmCancel(object):
                             print "CANCELALL_STATUS=", status
                             print "CANCELALL_RESP=", resp
                         result = result + "OK"
+                        mydelay = True
 
                     allids = allids + delta.id
                     if alldeltas.index(delta) != len(alldeltas)-1:
                         allids = allids + ','
                         result = result + ','
+                if (mydelay):
+                    if (nrm_config["debug"]>0): 
+                        print "CANCELALL_TIMEDELAY_60"
+                    time.sleep(60)	#time delay (60 seconds) for the OSCARS switch reset delay time issue, after "cancel" for committed vlans
             else:
                 result = "CANCELALL_DELTAS_NOT_FOUND"
             return result, allids

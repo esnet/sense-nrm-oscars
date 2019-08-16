@@ -26,30 +26,31 @@
 # Current server host information
 nrm_config = {
     "host": "dev-sense-nrm.es.net",
-    "port": 443,
-    "urnprefix": "urn:ogf:network:es.net:2013",
-    "debug": 4  # debug level [0-9]
+    "port": 8443,
+    "urnprefix": "urn:ogf:network:es.net:2019",
+    "debug": 8  # debug level [0-9]
 }
 
 nrm_service = {
+    # "l3vpn_model_insert": "./nrm-l3vpn.txt", # Static L3VPN model insert path
     "poll_duration": 60,  # minutes
-    "default_delta_lifetime": 72 # 72 hours, 168 hours (7 days)
+    "default_delta_lifetime": 24 # 72 hours
 }
 
 # Configurations for sqlalchemy
 nrmdb_config = {
     "type": "sqlite",
-    "url": "./nrmdb.db"
+    "url": "/home/asim/tbnrm/nrmtb.db"
 }
 
 # OSCARS access information
-oscars_config = {
-    "url": "oscars-dev2.es.net:443",     # Required for requests
-    "default_user": None,     # Required for requests
-    "default_passwd": None,   # Optional, but Only required for token retrieval
-    "default_token": None,    # Required for requests
-    "default_dn": None        # Optional
-}
+#oscars_config = {
+#    "url": "oscars-dev2.es.net:443",
+#    "default_user": None,
+#    "default_passwd": None,
+#    "default_token": None,
+#    "default_dn": None
+#}
 # For example,
 #oscars_config = {
 #    "url": "oscars-dev2.es.net:443",
@@ -59,22 +60,41 @@ oscars_config = {
 #    "default_dn": "DC=org/DC=SENSE/O=LBNL/OU=People/CN=This User 1234"
 #}
 
+## OSCARS production
+#oscars_config = {
+#    "url": "oscars-web.es.net:443",
+#    "default_user": "asim",
+#    "default_passwd": "sdmGr00p#1_2018",
+#    "default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTUzNjM0MzU0Mjk2MywiZXhwIjoyNDAwMzQzNTQyfQ.sIcuilaWg0rnZYmi5Hx7-x5B6XePbdna-YkArgEw3M-bX33HvSgcp9OdZOk7ImFXlg4zc9BQe9yBPSfA4yeJqA",
+#    "default_dn": "/DC=org/DC=opensciencegrid/O=Open Science Grid/OU=People/CN=Alex Sim 1116"
+#}
+
+## OSCARS netlab
+oscars_config = {
+    "url": "oscars-dev2.es.net:443",
+    "default_user": "asim",
+    "default_passwd": "sdmGroup#1",
+    #"default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTUxNzUwNzU1MjU1MiwiZXhwIjoyMzgxNTA3NTUyfQ.h7zntsDFIzBQHG1PNlJNWbvpUw4WcAqbDdLR0N0-gdsbPdOpSG9Bk8WRMuVYwogd_DE4b49doU9A3XD3AB5dYg",
+    "default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTU1NTAwMjUzMDI3OCwiZXhwIjoyNDE5MDAyNTMwfQ.Eh3GwCeeVHaqazCLm5gRwmdXs2cOYemte0mNXzMrXbn6K5RuJdAVTDWa5wSmpZbwVfd5TW63qCdLMl-xLcWcTA",
+    "default_dn": "CN=Alex Sim 1116,OU=People,O=Open Science Grid,DC=opensciencegrid,DC=org"
+}
+
 users_config = {
     "admin" : "CN=Alex Sim,O=ESnet,ST=CA,C=US",
-    "mapfile" : "/etc/grid-security/nrm-mapfile"
+    "mapfile" : "/home/asim/tbnrm/nrm-mapfile"
          # mapfile format: DN group
-         # e.g. "/DC=org/DC=OSG/O=OSG/OU=People/CN=Alex Sim 2019" default
+         # e.g. "/DC=org/DC=opensciencegrid/O=Open Science Grid/OU=People/CN=Alex Sim 1116" default
 }
 
 # Configurations for WSGI, should be the same in httpd-ssl.conf
 ssl_config = {
-    "capath":    "/etc/grid-security/certificates",
-    "hostcertpath": "/etc/grid-security/sensenrm-cert.pem",
-    "hostkeypath": "/etc/grid-security/sensenrm-key.pem", 
+    "capath":    "/usr/local/pkg/grid-security/certificates",
+    "hostcertpath": "/usr/local/pkg/grid-security/openssl/sensenrm-cert.pem",
+    "hostkeypath": "/usr/local/pkg/grid-security/openssl/sensenrm-key.pem", 
     "httpsverify": False
 }
 
 log_config = {
-    "basepath": "./logs"
+    "basepath": "/home/asim/tbnrm/logs"
 }
 
