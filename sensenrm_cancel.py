@@ -100,12 +100,12 @@ class nrmCancel(object):
                     resp = "CANCEL_OSCARS_EXCEPTION: " + str(status)
                 did = delta.id
 
-                if status == 400:
+                if (status == 400) or (status == 404):
                     sensenrm_db.update_switch(s, did, 0)
                     sensenrm_db.remove_junction_bidports_with_delta(s, did)
                     sensenrm_db.insert_idelta_remove_delta(s, did, True, cid)
                     if (nrm_config["debug"]>0): 
-                        print "Cannot_CANCEL_BUT_Cancelled_400: ", status
+                        print "Cannot_CANCEL_BUT_Cancelled_400_404: ", status
                 elif status != 200:
                     if (nrm_config["debug"]>0): 
                         print "Cannot_CANCEL: ", status
