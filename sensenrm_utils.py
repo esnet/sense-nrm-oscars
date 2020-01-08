@@ -16,10 +16,21 @@
 # distribute copies to the public, prepare derivative works, and perform
 # publicly and display publicly, and to permit other to do so.
 #
-# Fri Apr 12 10:13:23 PDT 2019
+# Fri Jan  3 13:28:47 PST 2020
 # sdmsupport@lbl.gov
 #
+## Utils
+#
+
 import sys
-sys.path.insert(0, "/home/asim/nrm")
-from sensenrm_server import nrm_application
-application = nrm_application
+import os
+from datetime import tzinfo, timedelta, datetime
+import dateutil.parser
+import time
+import uuid
+import fileinput
+import json
+from sensenrm_config import log_config, nrm_config
+
+def nprint(*args):
+	print(''.join(str(e) for e in args))

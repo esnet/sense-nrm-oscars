@@ -1,5 +1,5 @@
 #
-# SENSE Resource Manager (SENSE-RM) Copyright (c) 2018-2019, The Regents
+# SENSE Resource Manager (SENSE-RM) Copyright (c) 2018-2020, The Regents
 # of the University of California, through Lawrence Berkeley National
 # Laboratory (subject to receipt of any required approvals from the
 # U.S. Dept. of Energy).  All rights reserved.
@@ -115,13 +115,13 @@ urnprefix = "urn:ogf:network:es.net:2019"
 ################################################################
 ################################################################
 # Do NOT edit below this line
-versioninfo = "NRM client v1.0.2 on May 28, 2019"
+versioninfo = "NRM client v1.0.3 on Jan 3, 2020"
 urllib3.disable_warnings(urllib3.exceptions.SubjectAltNameWarning)
 debug=False
 
-def myprint(s):
+def myprint(*args):
     if (debug):
-        print(s)
+        print(''.join(str(e) for e in args))
         
 def service_end_point():
     myept = "https://" + nrmservice_http
@@ -339,7 +339,7 @@ def commit_delta(deltaid):
         return False
     print('NRM commit result : {}'.format(resp.json()["result"]))
     myprint('NRM commit response:')
-    myprint(json.dumps(resp.json(), indent = 4))
+    print(json.dumps(resp.json(), indent = 4))
     return True
     
 def status_delta(statusid):
@@ -351,7 +351,7 @@ def status_delta(statusid):
         raise Exception('Status Delta Error {}'.format(resp.status_code))
     print('NRM summary result: {}'.format(resp.json()["state"]))
     myprint('NRM summary response:')
-    myprint(json.dumps(resp.json(), indent = 4))
+    print(json.dumps(resp.json(), indent = 4))
     return True
     
 def clear_hold(deltaid):
@@ -364,7 +364,7 @@ def clear_hold(deltaid):
         return False
     print('NRM clear result: {}'.format(resp.json()["result"]))
     myprint('NRM clear response:')
-    myprint(json.dumps(resp.json(), indent = 4))
+    print(json.dumps(resp.json(), indent = 4))
     return True
 
 def cancel_delta(deltaid):
@@ -377,7 +377,7 @@ def cancel_delta(deltaid):
         raise Exception('/deltas/actions/cancel Error {}'.format(resp.status_code))
     print('NRM cancel result: {}'.format(resp.json()["result"]))
     myprint('NRM cancel response:')
-    myprint(json.dumps(resp.json(), indent = 4))
+    print(json.dumps(resp.json(), indent = 4))
     return True
 
 def delete_model(model_id):
@@ -390,7 +390,7 @@ def delete_model(model_id):
         raise Exception('/models/id via delete Error {}'.format(resp.status_code))
     print('NRM delete model result: {}'.format(resp.json()["result"]))
     myprint('NRM delete model response:')
-    myprint(json.dumps(resp.json(), indent = 4))
+    print(json.dumps(resp.json(), indent = 4))
     myprint("NRM delete model DONE")
     return True
 

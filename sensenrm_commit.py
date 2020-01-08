@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -28,6 +28,7 @@ import sys
 import os
 import fileinput
 
+import sensenrm_utils as utils
 import sensenrm_oscars
 import sensenrm_db
 import json
@@ -76,28 +77,28 @@ class nrmCommit(object):
         with mydb_session() as s:            
             delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == nrm_deltaid).first()
             if delta is None:
-                if (nrm_config["debug"]>0): print "COMMIT_DELTAID_NOTFOUND=", nrm_deltaid
+                if (nrm_config["debug"]>0): utils.nprint("COMMIT_DELTAID_NOTFOUND=", nrm_deltaid)
                 delta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.cancelid == nrm_deltaid).first()
                 if delta is None:
-                    if (nrm_config["debug"]>0): print "COMMIT_iDELTAID_NOTFOUND=", nrm_deltaid
+                    if (nrm_config["debug"]>0): utils.nprint("COMMIT_iDELTAID_NOTFOUND=", nrm_deltaid)
                 else:
                     if (nrm_config["debug"]>0):
-                        print "COMMIT_CANCELLED_DELTA_ID=", nrm_deltaid, "=", delta.id, "=", delta.cancelid
+                        utils.nprint("COMMIT_CANCELLED_DELTA_ID=", nrm_deltaid, "=", delta.id, "=", delta.cancelid)
                     return True
                 return False
             if (nrm_config["debug"]>0):
-                print "COMMIT_DELTA_ID=", nrm_deltaid, "=", delta.id
-                print "COMMIT_HELD_ID=", delta.heldid
-                print "COMMIT_DELTA_USERID=", delta.userid
+                utils.nprint("COMMIT_DELTA_ID=", nrm_deltaid, "=", delta.id)
+                utils.nprint("COMMIT_HELD_ID=", delta.heldid)
+                utils.nprint("COMMIT_DELTA_USERID=", delta.userid)
             if (delta.userid == uid) or (sensenrm_db.is_admin(s,uid)):
                 gid = sensenrm_db.get_user_group(s,uid)
                 try:
                     status, resp = oscars_conn.get_commit(delta.heldid, gid)
                     if (nrm_config["debug"]>0):
-                        print "COMMIT_STATUS=", status
-                        print "COMMIT_RESP=", resp
+                        utils.nprint("COMMIT_STATUS=", status)
+                        utils.nprint("COMMIT_RESP=", resp)
                 except Exception as e:
-                    if (nrm_config["debug"]>0): print "COMMIT EXCEPT: ", e
+                    if (nrm_config["debug"]>0): utils.nprint("COMMIT EXCEPT: ", e)
                     status = 600
                 if status == 200:
                     sensenrm_db.insert_delta_value(s, nrm_deltaid, "status", "COMMITTED")
@@ -108,7 +109,7 @@ class nrmCommit(object):
                     return False
             else:
                 if (nrm_config["debug"]>0):
-                    print "COMMIT_UNAUTHORIZED_USER: ", uid
+                    utils.nprint("COMMIT_UNAUTHORIZED_USER: ", uid)
                 return False
         return True
     

@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -27,6 +27,8 @@ import uuid
 import sys
 import os
 import fileinput
+
+import sensenrm_utils as utils
 import sensenrm_oscars
 import sensenrm_db
 import json
@@ -45,10 +47,10 @@ class nrmModel(object):
         self.obj=" "
         #self.last_time = self.get_delayed_time(-1)
         if "l3vpn_model_insert" in nrm_service:
-            print("nrm_service_L3VPN_insert:" + nrm_service["l3vpn_model_insert"])
+            utils.nprint(("nrm_service_L3VPN_insert:" + nrm_service["l3vpn_model_insert"]))
             self.l3vpnPath = nrm_service["l3vpn_model_insert"]
         else:
-            print("nrm_service_L3VPN_insert_does_not_exist")
+            utils.nprint("nrm_service_L3VPN_insert_does_not_exist")
 
     def getUUID(self):
         nrmmodel_uuid = uuid.uuid5(uuid.NAMESPACE_URL, str(self.getTime()))
@@ -75,11 +77,11 @@ class nrmModel(object):
             last_time = sensenrm_db.get_sys_lasttime(s)
             model_change = sensenrm_db.get_sys_lastchange(s)
         if (nrm_config["debug"]>2): 
-            print "MODEL: current time: ", t21
-            print "MODEL: Since last time: ", last_time
+            utils.nprint("MODEL: current time: ", t21)
+            utils.nprint("MODEL: Since last time: ", last_time)
         tdiff = t21 - last_time
         if (nrm_config["debug"]>2): 
-            print "MODEL: Avail in: ", (nrm_service["poll_duration"]*60) - tdiff.total_seconds()
+            utils.nprint("MODEL: Avail in: ", (nrm_service["poll_duration"]*60) - tdiff.total_seconds())
 
         #if tdiff.total_seconds() < (nrm_service["poll_duration"]*60):
         if (model_change == 1) or (tdiff.total_seconds() > (nrm_service["poll_duration"]*60)):
@@ -98,7 +100,7 @@ class nrmModel(object):
             #last_time = self.get_delayed_time(0)
             last_time = datetime.now()
             if (nrm_config["debug"]>2):
-                print "MODEL: Set last time: ", last_time
+                utils.nprint("MODEL: Set last time: ", last_time)
             sensenrm_db.update_sys_value(s, "last_model_time", last_time)
 
     def getTime(self):
@@ -150,7 +152,7 @@ class nrmModel(object):
         timed_file = datetime.fromtimestamp(time.mktime(datetime.now().timetuple())).strftime('%Y%m%d-%H%M%S')
         output_file = self.basePath+"/model_" + str(timed_file) + "_" + str(nrm_uuid) + ".txt"
         if (nrm_config["debug"]>3):
-            print "MODEL: OUTPUT_PATH=", output_file
+            utils.nprint("MODEL: OUTPUT_PATH=", output_file)
         fo = open(output_file, 'w')
         fo.write(modelcontent)
         fo.close()
@@ -159,7 +161,7 @@ class nrmModel(object):
     
     def getModel(self):
         if not self.getAvailOK() :
-            #if (nrm_config["debug"]>3): print "MODEL: LAST_TIME=", self.last_time
+            #if (nrm_config["debug"]>3): utils.nprint("MODEL: LAST_TIME=", self.last_time)
             with mydb_session() as s:
                 old_id, old_href, old_creationtime, old_model = sensenrm_db.get_sys_lastmodel(s)
             return [{"id":old_id,"href":old_href,"creationTime":old_creationtime,"model":old_model}], False
@@ -175,14 +177,14 @@ class nrmModel(object):
         try:
             resp = oscars_conn.get_avail_topo()
         except Exception as e:
-            if (nrm_config["debug"]>0): print "MODEL EXCEPT: ", e
+            if (nrm_config["debug"]>0): utils.nprint("MODEL EXCEPT: ", e)
             raise
 
         with mydb_session() as s:
             sensenrm_db.remove_expired_deltas(s) # Checking expired deltas
             allJunctions = s.query(sensenrm_db.oJunction).all();
             if (nrm_config["debug"]>3):
-                print "\nMODEL: num of junctions = ", len(allJunctions)
+                utils.nprint("\nMODEL: num of junctions = ", len(allJunctions))
             myjlist = ""
             jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth} for f in allJunctions]
             for f in allJunctions:
@@ -224,8 +226,8 @@ class nrmModel(object):
             for mObj in mObjs:
                 # GET oDelta.switch_list and split with , for "netlab-7750sr12-rt2:10/1/5:2210,netlab-mx960-rt1:xe-11/2/0:2210"
                 if (nrm_config["debug"]>6): 
-                    print "MODEL: SWITCHID=", mObj.id
-                    print "MODEL: DELTAID=", mObj.deltaid
+                    utils.nprint("MODEL: SWITCHID=", mObj.id)
+                    utils.nprint("MODEL: DELTAID=", mObj.deltaid)
                 mDelta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == mObj.deltaid).first()
                 mydeltaid = ""
                 mydeltavlan = ""
@@ -249,15 +251,15 @@ class nrmModel(object):
                     if mydeltavlanEmpty :
                         mydeltavlan = str(mObj.vlanport) # there is always one
                     if (nrm_config["debug"]>6): 
-                        print "MODEL_DELTA_ID=", mDelta.id
-                        print "MODEL_DELTA_ID_MY=", mydeltaid
-                        print "MODEL_DELTA_VLAN_MY=", mydeltavlan
+                        utils.nprint("MODEL_DELTA_ID=", mDelta.id)
+                        utils.nprint("MODEL_DELTA_ID_MY=", mydeltaid)
+                        utils.nprint("MODEL_DELTA_VLAN_MY=", mydeltavlan)
 
                     if addToModel:
                         dswitch = mDelta.switch_list.split(",") 
                         if (nrm_config["debug"]>6): 
-                            print "MODEL_DELTA_SWITCH=", mDelta.switch_list
-                            print "MODEL_DELTA_IDs=", adlist
+                            utils.nprint("MODEL_DELTA_SWITCH=", mDelta.switch_list)
+                            utils.nprint("MODEL_DELTA_IDs=", adlist)
                         for ds in dswitch:
                             if (len(ds) > 0) :
                                 ds1 = ds.split(":")  # ds1[0]="netlab-7750sr12-rt2"
@@ -265,7 +267,7 @@ class nrmModel(object):
                                 scontent = scontent + '<' + urnpr + '::' + ds1[0] + ':' + ds2 + ':+:vlanport+' + ds1[2] + '>'
                                 if dswitch.index(ds) != len(dswitch)-1:
                                     scontent = scontent + ', '
-                        if (nrm_config["debug"]>6): print "MODEL_DELTA_SCONTENT=", scontent
+                        if (nrm_config["debug"]>6): utils.nprint("MODEL_DELTA_SCONTENT=", scontent)
 
                         dvlan = mydeltavlan.split(",")
                         durs = mydeltaurs.split(",")
@@ -286,8 +288,8 @@ class nrmModel(object):
                 dvlan = mydeltavlan
                 durs = mydeltaurs
                 if (nrm_config["debug"]>7): 
-                    print "MODEL: mydeltavlan:", mydeltavlan
-                    print "MODEL: mydvlan:", dvlan
+                    utils.nprint("MODEL: mydeltavlan:", mydeltavlan)
+                    utils.nprint("MODEL: mydvlan:", dvlan)
                 #dvi = dvlan.index(sport)
 
                 #modelcontent = modelcontent + '<' + urnpr + '::'+sname[0] + ':' + sname1 + ':+:vlanport+' + sport + '>\n        a                 nml:BidirectionalPort ;\n        nml:belongsTo     <' + urnpr + '::ServiceDomain:EVTS.A-GOLE:conn+' + mydeltaid + ':' + durs[dvi] + ':vlan+' + sport + '>,<' + urnpr + '::' + sname[0] + ':' + sname1 + ':+> ;\n        nml:encoding      <http://schemas.ogf.org/nml/2012/10/ethernet> ;\n        nml:existsDuring  <' + urnpr + '::ServiceDomain:EVTS.A-GOLE:conn+' + mydeltaid + ':' + durs[dvi] + ':vlan+' + sport + ':existsDuring> ;\n        nml:hasLabel      <' + urnpr + '::' + sname[0] + ':' + sname1 + ':+:vlanport+' + sport + ':label+' + sport + '> ;\n        nml:hasService    <' + urnpr + '::' + sname[0] + ':' + sname1 + ':+:vlanport+' + sport + ':service+bw> ;\n        nml:name          "' + mObj.heldid+":"+mObj.deltaid +':'+mydeltaid+'" .\n\n'
@@ -325,12 +327,12 @@ class nrmModel(object):
             modelc = json.dumps(jDetails, indent = 4)
 
         if (nrm_config["debug"]>4):
-            print '[{"id":', str(self.getUUID()),',"href":', str(self.getURL()),',"creationTime":', str(self.getTime()), '}]', str(self.getTime())
+            utils.nprint('[{"id":', str(self.getUUID()),',"href":', str(self.getURL()),',"creationTime":', str(self.getTime()), '}]', str(self.getTime()))
         #if (nrm_config["debug"]>7):
-        #    print '[{"id":', str(self.getUUID()),',"href":', str(self.getURL()),',"creationTime":', str(self.getTime()),',"model":', str(modelc), '}]', str(self.getTime())
+        #    utils.nprint('[{"id":', str(self.getUUID()),',"href":', str(self.getURL()),',"creationTime":', str(self.getTime()),',"model":', str(modelc), '}]', str(self.getTime()))
         
         if (nrm_config["debug"]>9):
-            print "modelcontent=", modelcontent
+            utils.nprint("modelcontent=", modelcontent)
         if (nrm_config["debug"]>8):
             self.writeModel(str(self.getUUID()), modelcontent)
 

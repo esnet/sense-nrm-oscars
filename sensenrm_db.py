@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -40,6 +40,7 @@ from datetime import tzinfo, timedelta, datetime
 import dateutil.parser
 
 from sensenrm_config import nrmdb_config, oscars_config, nrm_config, users_config
+import sensenrm_utils as utils
 
 Base = declarative_base()
 database = None
@@ -106,7 +107,7 @@ class oUser(Base):
     last_updated = Column(String) # str(datetime.now())
 
     def printMe(self):
-        if (nrm_config["debug"]>0): print "DN::[",self.id,"] Group=[",self.group,"]";
+        if (nrm_config["debug"]>0): utils.nprint("DN::[",self.id,"] Group=[",self.group,"]");
 
 class oGroup(Base):
     # Group logins for OSCARS access (default access account, group access account, etc)
@@ -118,8 +119,8 @@ class oGroup(Base):
     dn = Column(String)
     code = Column(String)
 
-    def printMe(self):
-        if (nrm_config["debug"]>0): print "id::[",self.id,"] login=[",self.login,"]";
+    def utils.nprintMe(self):
+        if (nrm_config["debug"]>0): utils.nprint("id::[",self.id,"] login=[",self.login,"]");
 
 class connModes(enum.Enum):
     created = 1
@@ -335,23 +336,23 @@ def create_userslist(s):
     fi = fileinput.FileInput(input_file)
     line1 = fi.readline()
     while line1:
-        #print("line="+line1)
+        #utils.nprint("line="+line1)
         parsed1 = line1.split('"')
         if (nrm_config["debug"]>0): 
-            print "USER_INSERT: " + parsed1[1] + "=" + parsed1[2].strip() + "="
+            utils.nprint("USER_INSERT: " + parsed1[1] + "=" + parsed1[2].strip() + "=")
         insert_user(s, parsed1[1], parsed1[2].strip(), "user", 1)
         line1 = fi.readline()
-    if (nrm_config["debug"]>0): print "Created USER_LIST successfully"
+    if (nrm_config["debug"]>0): utils.nprint("Created USER_LIST successfully")
 
 def initialize_db():
     global initDone
     if (initDone):
         if (nrm_config["debug"]>0): 
-            print "Created/Opened database already"
-            print "Init database already done"
+            utils.nprint("Created/Opened database already")
+            utils.nprint("Init database already done")
     else:
         initDone=True
-        if (nrm_config["debug"]>0): print "Init database"
+        if (nrm_config["debug"]>0): utils.nprint("Init database")
         db_config = nrmdb_config
         global database
         database = DB(db_config)
@@ -373,12 +374,12 @@ def initialize_db():
         else:
             userid = oscars_config["default_user"]
         if oscars_config["default_passwd"] == None:
-            print 'Cannot get oscars_config["default_passwd"]. Edit sensenrm_config.py for oscars_config.default_passwd'
+            utils.nprint('Cannot get oscars_config["default_passwd"]. Edit sensenrm_config.py for oscars_config.default_passwd')
             password = ""
         else:
             password = oscars_config["default_passwd"]
         if oscars_config["default_dn"] == None:
-            print 'Cannot get oscars_config["default_dn"]. Edit sensenrm_config.py for oscars_config.default_dn'
+            utils.nprint('Cannot get oscars_config["default_dn"]. Edit sensenrm_config.py for oscars_config.default_dn')
             mydn = ""
         else:
             mydn = oscars_config["default_dn"]
@@ -398,7 +399,7 @@ def initialize_db():
             insert_group(s, "default", userid, password, mytoken, mydn)
             create_userslist(s)  ## Creating users list with mapfile
     
-        if (nrm_config["debug"]>0): print "Created/Opened database successfully"
+        if (nrm_config["debug"]>0): utils.nprint("Created/Opened database successfully")
 
 def deactivate_user(s, uid):
     insert_user_value(s, uid, "active", 0)
@@ -442,18 +443,18 @@ def update_sys_value(s, key, value):
     elif (key.lower() == "model_changed"):
         mObj.model_changed = value
     else:
-        if (nrm_config["debug"]>6): print "DB: nrmSys key not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: nrmSys key not found: ", key)
         return "sys key not found"
     s.add(mObj)
     s.commit()
 
 def update_switch(s, did, flag):
-    if (nrm_config["debug"]>6): print "DB: UPDATE_SWITCH=", did
+    if (nrm_config["debug"]>6): utils.nprint("DB: UPDATE_SWITCH=", did)
     mObjs = s.query(oSwitch).filter(oSwitch.deltaid == did).all()
     if mObjs is None:
-        if (nrm_config["debug"]>6): print "DB: NO Switches for DELTAID=", did
+        if (nrm_config["debug"]>6): utils.nprint("DB: NO Switches for DELTAID=", did)
     else:
-        if (nrm_config["debug"]>6): print "DB: Switch exists=", 
+        if (nrm_config["debug"]>6): utils.nprint("DB: Switch exists=", end=' ') 
         for mObj in mObjs:
             mObj.active = flag
             s.add(mObj)
@@ -461,7 +462,7 @@ def update_switch(s, did, flag):
 
 
 def insert_switch(s, did, swn, vport, bw, st, et, connid):
-    if (nrm_config["debug"]>6): print "DB: INSERT_SWITCH indented_show"
+    if (nrm_config["debug"]>6): utils.nprint("DB: INSERT_SWITCH indented_show")
     swid = did + ":" + swn + ":" + str(vport)
 
     mObj = s.query(oSwitch).filter(oSwitch.id == swid).first()
@@ -471,9 +472,9 @@ def insert_switch(s, did, swn, vport, bw, st, et, connid):
         oj = oSwitch(id=swid, deltaid=did, name=swn, vlanport=vport, reservedbw=bw, creation_date=timenow, active=0, time_begin=st, time_end=et, heldid=connid)
         s.add(oj)
         s.commit()
-        if (nrm_config["debug"]>9): print "DB: switch added=", swn, "=", swid
+        if (nrm_config["debug"]>9): utils.nprint("DB: switch added=", swn, "=", swid)
     else:
-        if (nrm_config["debug"]>9): print "DB:A switch exists=", swn, "=", swid
+        if (nrm_config["debug"]>9): utils.nprint("DB:A switch exists=", swn, "=", swid)
 
 def insert_switch_value(s, id, key, value):
     mObj = s.query(oSwitch).filter(oSwitch.id == id).first()
@@ -497,14 +498,14 @@ def insert_switch_value(s, id, key, value):
     elif (key.lower() == "delta_id"):
         mObj.delta_id = value
     else:
-        if (nrm_config["debug"]>6): print "DB: switch key not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: switch key not found: ", key)
         return "switch key not found"
     s.add(mObj)
     s.commit()
 
 
 def insert_delta(s, uid, did, mid, swns, tstart, tend, aid, avlan, durs, hldid):
-    if (nrm_config["debug"]>4): print "DB: INSERT_DELTA"
+    if (nrm_config["debug"]>4): utils.nprint("DB: INSERT_DELTA")
 
     mObj = s.query(oDelta).filter(oDelta.id == did).first()
     if mObj is None:
@@ -513,16 +514,16 @@ def insert_delta(s, uid, did, mid, swns, tstart, tend, aid, avlan, durs, hldid):
         oj = oDelta(id=did, modelid=mid, userid=uid, time_begin=tstart, time_end=tend, creation_date=timenow, switch_list=swns, altid=aid, altvlan=avlan, urs=durs, status="REQUESTED", heldid=hldid)
         s.add(oj)
         s.commit()
-        if (nrm_config["debug"]>6): print "DB: delta added=", did
+        if (nrm_config["debug"]>6): utils.nprint("DB: delta added=", did)
     else:
-        if (nrm_config["debug"]>6): print "DB: delta exists=", did
+        if (nrm_config["debug"]>6): utils.nprint("DB: delta exists=", did)
 
 def insert_idelta_remove_delta(s, did, cancelled, cid):
-    if (nrm_config["debug"]>4): print "DB: INSERT_INACTIVE_DELTA"
+    if (nrm_config["debug"]>4): utils.nprint("DB: INSERT_INACTIVE_DELTA")
 
     mObj = s.query(oDelta).filter(oDelta.id == did).first()
     if mObj is None:
-        if (nrm_config["debug"]>6): print "DB: active delta NOT_FOUND=", did
+        if (nrm_config["debug"]>6): utils.nprint("DB: active delta NOT_FOUND=", did)
     else:
         # Cancel equivalent
         update_switch(s, did, 0)
@@ -542,9 +543,9 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
             if cancelled: 
                 oj.cancelid = cid
             s.add(oj)
-            if (nrm_config["debug"]>6): print "DB: inactive delta added=", did
+            if (nrm_config["debug"]>6): utils.nprint("DB: inactive delta added=", did)
         else:
-            if (nrm_config["debug"]>6): print "DB: inactive delta exists=", did
+            if (nrm_config["debug"]>6): utils.nprint("DB: inactive delta exists=", did)
             #timenow = datetime.utcnow()
             timenow = str(datetime.now(utc))
             creation_date = creation_date + ":" + timenow
@@ -564,7 +565,7 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
         s.commit()
 
 def convert_str_to_datetime(mystr):
-    if (nrm_config["debug"]>6): print "DB: convert_time: ", mystr
+    if (nrm_config["debug"]>6): utils.nprint("DB: convert_time: ", mystr)
     date_with_tz = mystr
     date_str, tz = date_with_tz[:-5], date_with_tz[-5:]
     dt_utc = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f")
@@ -584,54 +585,54 @@ def get_time_diff(time_to_compare, current_time):
 def remove_expired_deltas(s):
     allDeltas = s.query(oDelta).all()
     if len(allDeltas) > 0:
-        if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTAS"
+        if (nrm_config["debug"]>6): utils.nprint("DB: REMOVE_EXPIRED_DELTAS")
         current_time = datetime.now(utc)
         if (nrm_config["debug"]>6):
-            print "DB: IS_EXPIRED_NOWTIME=", current_time
+            utils.nprint("DB: IS_EXPIRED_NOWTIME=", current_time)
         for f in allDeltas:
             tdiff = get_time_diff(f.time_end, current_time)
             #if (nrm_config["debug"]>4):
-                #print "DB: IS_EXPIRED_DELTAID=", f.id
-                #print "DB: IS_EXPIRED_ENDTIME=", f.time_end
-                #print "DB: IS_EXPIRED_DIFFTIME=",tdiff
+                #utils.nprint("DB: IS_EXPIRED_DELTAID=", f.id)
+                #utils.nprint("DB: IS_EXPIRED_ENDTIME=", f.time_end)
+                #utils.nprint("DB: IS_EXPIRED_DIFFTIME=",tdiff)
             if (tdiff < 0): # expired
                 if (nrm_config["debug"]>3):
-                    print "DB: IS_EXPIRED_TDIFF=", tdiff
-                    print "DB: IS_EXPIRED_REMOVE=", f.id
-                    print "DB: IS_EXPIRED_ENDTIME=", f.time_end
+                    utils.nprint("DB: IS_EXPIRED_TDIFF=", tdiff)
+                    utils.nprint("DB: IS_EXPIRED_REMOVE=", f.id)
+                    utils.nprint("DB: IS_EXPIRED_ENDTIME=", f.time_end)
                 insert_idelta_remove_delta(s, f.id, False, "")
     else:
-        if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTAS NO_ACTIVE_DELTAS"
+        if (nrm_config["debug"]>6): utils.nprint("DB: REMOVE_EXPIRED_DELTAS NO_ACTIVE_DELTAS")
 
 def remove_expired_delta(s, did):
-    if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTA:", did
+    if (nrm_config["debug"]>6): utils.nprint("DB: REMOVE_EXPIRED_DELTA:", did)
     resp_status = False
     mObj = s.query(oDelta).filter(oDelta.id == did).first()
     if mObj is None:
-        if (nrm_config["debug"]>6): print "DB: REMOVE_EXPIRED_DELTA NOT_FOUND:", did
+        if (nrm_config["debug"]>6): utils.nprint("DB: REMOVE_EXPIRED_DELTA NOT_FOUND:", did)
     else:
         current_time = datetime.now(utc)
         time_to_compare = mObj.time_end
         if (nrm_config["debug"]>6):
-            print "DB: IS2_EXPIRED_NOWTIME=", current_time
-            print "DB: IS2_EXPIRED_ENDTIME=", time_to_compare
+            utils.nprint("DB: IS2_EXPIRED_NOWTIME=", current_time)
+            utils.nprint("DB: IS2_EXPIRED_ENDTIME=", time_to_compare)
         #tdiff = current_time - convert_str_to_datetime(time_to_compare)
         tdiff = get_time_diff(time_to_compare, current_time)
         #if (nrm_config["debug"]>4):
-            #print "DB: IS2_EXPIRED_DELTAID=", mObj.id
-            #print "DB: IS2_EXPIRED_ENDTIME=", time_to_compare
-            #print "DB: IS2_EXPIRED_DIFFTIME=",tdiff
+            #utils.nprint("DB: IS2_EXPIRED_DELTAID=", mObj.id)
+            #utils.nprint("DB: IS2_EXPIRED_ENDTIME=", time_to_compare)
+            #utils.nprint("DB: IS2_EXPIRED_DIFFTIME=",tdiff)
         if (tdiff < 0): # expired
             if (nrm_config["debug"]>3):
-                print "DB: IS2_EXPIRED_TDIFF=", tdiff
-                print "DB: IS2_EXPIRED_REMOVE=", mObj.id
-                print "DB: IS2_EXPIRED_ENDTIME=", time_to_compare
+                utils.nprint("DB: IS2_EXPIRED_TDIFF=", tdiff)
+                utils.nprint("DB: IS2_EXPIRED_REMOVE=", mObj.id)
+                utils.nprint("DB: IS2_EXPIRED_ENDTIME=", time_to_compare)
             insert_idelta_remove_delta(s, mObj.id, False, "")
             resp_status = True
     return resp_status    
 
 def is_delta_active(s, did, checkInactive):
-    if (nrm_config["debug"]>6): print "DB: delta_search:", did
+    if (nrm_config["debug"]>6): utils.nprint("DB: delta_search:", did)
     activestatus = False
     mObj = s.query(oDelta).filter(oDelta.id == did).first()
     if mObj is None:
@@ -642,23 +643,23 @@ def is_delta_active(s, did, checkInactive):
                 if miObj is None:
                     maiObj = s.query(oiDelta).filter(oiDelta.altid == did).first()
                     if maiObj is None:
-                        if (nrm_config["debug"]>6): print "DB::delta_search:NOTFOUND:", did,"=",activestatus
+                        if (nrm_config["debug"]>6): utils.nprint("DB::delta_search:NOTFOUND:", did,"=",activestatus)
                 else:
                     activestatus = False
-                    if (nrm_config["debug"]>6): print "DB::delta_search:INACT:", did,"=",activestatus
+                    if (nrm_config["debug"]>6): utils.nprint("DB::delta_search:INACT:", did,"=",activestatus)
             else:
-                if (nrm_config["debug"]>6): print "DB::delta_search:NOTFOUND:", did,"=",activestatus
+                if (nrm_config["debug"]>6): utils.nprint("DB::delta_search:NOTFOUND:", did,"=",activestatus)
                 
         else:
             expired_status = remove_expired_delta(s, maObj.id)
             if (not expired_status):
                 activestatus = True
-            if (nrm_config["debug"]>6): print "DB::delta_search:ALT:", did,"=",activestatus
+            if (nrm_config["debug"]>6): utils.nprint("DB::delta_search:ALT:", did,"=",activestatus)
     else:
         expired_status = remove_expired_delta(s, mObj.id)
         if (not expired_status):
             activestatus = True
-        if (nrm_config["debug"]>6): print "DB::delta_search:ACT", did,"=",activestatus
+        if (nrm_config["debug"]>6): utils.nprint("DB::delta_search:ACT", did,"=",activestatus)
     return activestatus
 
 def get_all_active_deltas(s, uid):
@@ -672,7 +673,7 @@ def get_all_active_deltas(s, uid):
                 allids = allids + f.id
                 if allDeltas.index(f) != len(allDeltas)-1:
                     allids = allids + ','
-            if (nrm_config["debug"]>6): print "DB::all_active_deltas_admin=", allids
+            if (nrm_config["debug"]>6): utils.nprint("DB::all_active_deltas_admin=", allids)
             return allids
         else:
             for f in allDeltas:
@@ -680,7 +681,7 @@ def get_all_active_deltas(s, uid):
                     myids = myids + f.id
                     if allDeltas.index(f) != len(allDeltas)-1:
                         myids = myids + ','
-            if (nrm_config["debug"]>6): print "DB::all_active_deltas_user=", myids
+            if (nrm_config["debug"]>6): utils.nprint("DB::all_active_deltas_user=", myids)
             return myids
     return myids
 
@@ -721,46 +722,46 @@ def insert_delta_value(s, id, key, value):
         else: 
             mObj.additional_info =  mObj.additional_info + ", " + value 
     else:
-        if (nrm_config["debug"]>6): print "DB: delta key not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: delta key not found: ", key)
         return "delta key not found"
     s.add(mObj)
     s.commit()
 
 def validate_user(s, uid):
-    if (nrm_config["debug"]>6): print "DB: Validate_user: ", uid
+    if (nrm_config["debug"]>6): utils.nprint("DB: Validate_user: ", uid)
     mObj = s.query(oUser).filter(oUser.id == uid).first()
     if mObj is not None:
-        if (nrm_config["debug"]>6): print "DB: User found: ", mObj.id
+        if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
         return True
     else:
         return False
 
 def get_user(s, uid):
-    if (nrm_config["debug"]>6): print "DB: Get_user: ", uid
+    if (nrm_config["debug"]>6): utils.nprint("DB: Get_user: ", uid)
     mObj = s.query(oUser).filter(oUser.id == uid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): print "DB: User found: ", mObj.id
+		if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
 		return mObj
     else:
 		return None
 
 def is_admin(s, uid):
-    if (nrm_config["debug"]>6): print "DB: Is_admin: ", uid
+    if (nrm_config["debug"]>6): utils.nprint("DB: Is_admin: ", uid)
     mObj = s.query(oUser).filter(oUser.id == uid).first()
     if mObj is None:
         return False
     else:
-		#if (nrm_config["debug"]>6): print "DB: User found: ", mObj.id
+		#if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
         if (mObj.role == "admin"):
 		    return True
         else:
 		    return False
 
 def get_user_group(s, uid):
-    if (nrm_config["debug"]>6): print "DB: Get_user_group: ", uid
+    if (nrm_config["debug"]>6): utils.nprint("DB: Get_user_group: ", uid)
     mObj = s.query(oUser).filter(oUser.id == uid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): print "DB: User found: ", mObj.id
+		if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
 		return mObj.group
     else:
 		return None
@@ -772,9 +773,9 @@ def insert_user(s, uid, group, role, active):
         u = oUser(id=uid, group=group, active=active, role=role, last_updated=current_time)
         s.add(u)
         s.commit()
-        if (nrm_config["debug"]>6): print "DB: user added=", uid
+        if (nrm_config["debug"]>6): utils.nprint("DB: user added=", uid)
     else:
-        if (nrm_config["debug"]>6): print "DB: user exists=", uid
+        if (nrm_config["debug"]>6): utils.nprint("DB: user exists=", uid)
         mObj.group = group
         mObj.active = active
         mObj.role = role
@@ -796,26 +797,26 @@ def insert_user_value(s, id, key, value):
     elif (key.lower() == "active"):
         mObj.active = value
     else:
-        if (nrm_config["debug"]>6): print "DB: User ID not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: User ID not found: ", key)
         return "User ID not found"
     mObj.last_updated =  str(datetime.now())
     s.add(mObj)
     s.commit()
 
 def get_group(s, gid):
-    if (nrm_config["debug"]>6): print "DB: Group query: ", gid
+    if (nrm_config["debug"]>6): utils.nprint("DB: Group query: ", gid)
     mObj = s.query(oGroup).filter(oGroup.id == gid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): print "DB: Group found: ", mObj.id
+		if (nrm_config["debug"]>6): utils.nprint("DB: Group found: ", mObj.id)
 		return mObj
     else:
 		return None
 
 def get_group_token(s, gid):
-    if (nrm_config["debug"]>6): print "DB: Group_token_query: ", gid
+    if (nrm_config["debug"]>6): utils.nprint("DB: Group_token_query: ", gid)
     mObj = s.query(oGroup).filter(oGroup.id == gid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): print "DB: Group found: ", mObj.id
+		if (nrm_config["debug"]>6): utils.nprint("DB: Group found: ", mObj.id)
 		return mObj.code
     else:
 		return None
@@ -826,10 +827,10 @@ def insert_group(s, gid, login, passwd, code, dn):
         u = oGroup(id=gid, login=login, passwd=passwd, dn=dn, code=code)
         s.add(u)
         s.commit()
-        if (nrm_config["debug"]>6): print "DB: Group added=", gid, "=", u.id
+        if (nrm_config["debug"]>6): utils.nprint("DB: Group added=", gid, "=", u.id)
     else:
         # Updating the group info
-        if (nrm_config["debug"]>6): print "DB: Group exists=", gid, "=", mObj.id
+        if (nrm_config["debug"]>6): utils.nprint("DB: Group exists=", gid, "=", mObj.id)
         mObj.login = login
         mObj.passwd = passwd
         mObj.dn = dn
@@ -853,7 +854,7 @@ def insert_group_value(s, id, key, value):
     elif (key.lower() == "dn"):
         mObj.dn = value
     else:
-        if (nrm_config["debug"]>6): print "DB: key not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: key not found: ", key)
         return "Group key not found"
     s.add(mObj)
     s.commit()
@@ -863,13 +864,13 @@ def insert_conn(s, cid, user=None):
     if mObj is None:
         #creationdate = str(datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f'))+"-07:00"
         creationdate = str(datetime.now(utc))
-        if (nrm_config["debug"]>6): print "DB: creationdate=", creationdate
+        if (nrm_config["debug"]>6): utils.nprint("DB: creationdate=", creationdate)
         u = oConnID(id=cid, userid=user, name=None, creation_date=creationdate, mode=connModes.created)
         s.add(u)
         s.commit()
-        if (nrm_config["debug"]>6): print "DB: connection added=", cid, "=", u.id
+        if (nrm_config["debug"]>6): utils.nprint("DB: connection added=", cid, "=", u.id)
     else:
-        if (nrm_config["debug"]>6): print "DB: connection exists=", cid, "=", mObj.id
+        if (nrm_config["debug"]>6): utils.nprint("DB: connection exists=", cid, "=", mObj.id)
 
 def update_conn(s, cid, key, value):
     mObj = s.query(oConnID).filter(oConnID.id == cid).first()
@@ -885,24 +886,24 @@ def update_conn(s, cid, key, value):
     elif (key.lower() == "mode"):
         mObj.mode = value
     else:
-        if (nrm_config["debug"]>6): print "DB: ConnectionID not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: ConnectionID not found: ", key)
         return "ConnectionID not found"
     s.add(mObj)
     s.commit()
 
 def insert_junction(s, mj):    
     if (nrm_config["debug"]>9): 
-        print "DB: INSERT_JUNCTION indented_show"
+        utils.nprint("DB: INSERT_JUNCTION indented_show")
         mj.indented_show()
-        print "DB: INSERT_JUNCTION indented_show DONE"
+        utils.nprint("DB: INSERT_JUNCTION indented_show DONE")
     mObj = s.query(oJunction).filter(oJunction.id == mj.junction_name).first()
     if mObj is None:
         oj = oJunction(id=mj.junction_name, name=mj.junction_name, port_urn=mj.port_urn, vlan_expression=mj.vlanExpression, ingress_bandwidth=mj.ingressBandwidth, egress_bandwidth=mj.egressBandwidth, bidports="")
         s.add(oj)
         s.commit()
-        if (nrm_config["debug"]>9): print "DB: junction added=", mj.junction_name, "=", oj.id
+        if (nrm_config["debug"]>9): utils.nprint("DB: junction added=", mj.junction_name, "=", oj.id)
     else:
-        if (nrm_config["debug"]>9): print "DB: junction exists=", mj.junction_name, "=", mObj.id
+        if (nrm_config["debug"]>9): utils.nprint("DB: junction exists=", mj.junction_name, "=", mObj.id)
         mObj.port_urn = mj.port_urn
         mObj.vlan_expression = mj.vlanExpression
         mObj.ingress_bandwidth = mj.ingressBandwidth
@@ -912,21 +913,21 @@ def insert_junction(s, mj):
 
 def display_db_junctions(s):
     allJunctions = s.query(oJunction).all();
-    if (nrm_config["debug"]>4): print "\nDB: num junctions = ", len(allJunctions)
+    if (nrm_config["debug"]>4): utils.nprint("\nDB: num junctions = ", len(allJunctions))
     jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth } for f in allJunctions]
-    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print(json.dumps(jDetails, indent = 4))
 
 def display_db_pce(s):
     allPCEs = s.query(oPCE).all();
-    if (nrm_config["debug"]>4): print "\nDB: num PCEs = ", len(allPCEs)
+    if (nrm_config["debug"]>4): utils.nprint("\nDB: num PCEs = ", len(allPCEs))
     jDetails = [{"id": f.id, "time_begin": f.time_begin, "time_end":f.time_end, "evaluated": f.evaluated, "cost": f.cost, "available_az": f.available_az, "available_za": f.available_za, "baseline_az": f.baseline_az, "baseline_za": f.baseline_za, "heldid":f.heldid, "held_id":f.held_id} for f in allPCEs]
-    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print(json.dumps(jDetails, indent = 4))
     
 def display_db_held(s):
     allJunctions = s.query(oJunction).all();
-    if (nrm_config["debug"]>4): print "\nDB: num junctions = ", len(allJunctions)
+    if (nrm_config["debug"]>4): utils.nprint("\nDB: num junctions = ", len(allJunctions))
     jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth} for f in allJunctions]
-    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print(json.dumps(jDetails, indent = 4))
   
 def insert_junction_bidports(s, deltaid, plist):
     # plist to be the list of the switches: SWITCHES= [u'wash-cr5:7/1/1:3603', u'chic-cr5:3/2/1:3603']
@@ -991,7 +992,7 @@ def remove_junction_bidports_with_delta(s, nrm_deltaid):
         if (dbf):
             s.commit()
     else:
-        if (nrm_config["debug"]>6): print "DB: REMOVE_JUNCTION NO_SWITCH_LIST"
+        if (nrm_config["debug"]>6): utils.nprint("DB: REMOVE_JUNCTION NO_SWITCH_LIST")
 
 #def remove_junction_bidports(s, id, plist):
 #    # id = junction id
@@ -1039,35 +1040,35 @@ def insert_junction_value(s, id, key, value):
         if (value not in bports): # delta_id:oJunctionID:vlan
             mObj.bidports = mObj.bidports + "," + value
     else:
-        if (nrm_config["debug"]>6): print "DB: Junction key not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: Junction key not found: ", key)
         return "Junction key not found"
     s.add(mObj)
     s.commit()
     
 def insert_pce(s, mj):
     if (nrm_config["debug"]>9): 
-        print "DB: INSERT_PCE indented_show"
+        utils.nprint("DB: INSERT_PCE indented_show")
         mj.indented_show()
-        print "DB: INSERT_PCE indented_show DONE"
+        utils.nprint("DB: INSERT_PCE indented_show DONE")
 
     mObj = s.query(oPCE).filter(oPCE.id == mj.id).first()    
     if mObj is None:
         oj = oPCE(id=mj.id, heldid = mj.held_id, time_begin=str(mj.time_begin.strftime('%Y-%m-%dT%H:%M:%S.%f'))+"-07:00", time_end=str(mj.time_end.strftime('%Y-%m-%dT%H:%M:%S.%f'))+"-07:00", pcemode=pceModes.shortest, evaluated=mj.evaluated, cost=mj.cost, ero_az=','.join(mj.azEro), ero_za=','.join(mj.zaEro), available_az=mj.azAvailable, available_za=mj.zaAvailable, baseline_az=mj.azBaseline, baseline_za=mj.zaBaseline);
         s.add(oj)
         if (nrm_config["debug"]>9):
-            print "DB: PCE added (DeltaID)=", mj.id, "=", oj.id
-            print "DB: PCE added (HeldOID)=", mj.held_id, "=", oj.heldid
-            #print "DB: PCE DISPLAY"
+            utils.nprint("DB: PCE added (DeltaID)=", mj.id, "=", oj.id)
+            utils.nprint("DB: PCE added (HeldOID)=", mj.held_id, "=", oj.heldid)
+            #utils.nprint("DB: PCE DISPLAY")
         s.commit()
         #if (nrm_config["debug"]>9):
-        #    print "DB: PCE committed1=", mj.id, "=", oj.id
-        #    print "DB: PCE committed2=", mj.held_id, "=", oj.heldid
-        #    print "DB: PCE committed3=", mj.held_id, "=", oj.held_id
+        #    utils.nprint("DB: PCE committed1=", mj.id, "=", oj.id)
+        #    utils.nprint("DB: PCE committed2=", mj.held_id, "=", oj.heldid)
+        #    utils.nprint("DB: PCE committed3=", mj.held_id, "=", oj.held_id)
     else:
         if (nrm_config["debug"]>9):
-            print "DB: PCE exists1=", mj.id, "=", mObj.id
-            print "DB: PCE exists2=", mj.held_id, "=", mObj.heldid
-            print "DB: PCE exists3=", mj.held_id, "=", mObj.held_id
+            utils.nprint("DB: PCE exists1=", mj.id, "=", mObj.id)
+            utils.nprint("DB: PCE exists2=", mj.held_id, "=", mObj.heldid)
+            utils.nprint("DB: PCE exists3=", mj.held_id, "=", mObj.held_id)
         mObj.time_begin = mj.time_begin
         mObj.time_end = mj.time_end
         mObj.evaluated = mj.evaluated
@@ -1083,7 +1084,7 @@ def insert_pce(s, mj):
         mObj.heldid = mj.held_id
         s.add(mObj)
         s.commit()
-        if (nrm_config["debug"]>7): print "DB: PCE exists. Update done=", mj.time_end, "=", mObj.time_end
+        if (nrm_config["debug"]>7): utils.nprint("DB: PCE exists. Update done=", mj.time_end, "=", mObj.time_end)
 
 def insert_pce_value(s, id, key, value):
     mObj = s.query(oPCE).filter(oPCE.id == id).first()
@@ -1119,7 +1120,7 @@ def insert_pce_value(s, id, key, value):
     elif (key.lower() == "baseline_za"):
         mObj.baseline_za = value
     else:
-        if (nrm_config["debug"]>6): print "DB: PCE key not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: PCE key not found: ", key)
         return "PCE key not found"
     s.add(mObj)
     s.commit()
@@ -1144,9 +1145,9 @@ def insert_held(s, id, heldmode=None, description=None, userid=None, phase=None,
                 
         s.add(ohld)
         s.commit()
-        if (nrm_config["debug"]>6): print "DB: Held added=", id, "=", ohld.id
+        if (nrm_config["debug"]>6): utils.nprint("DB: Held added=", id, "=", ohld.id)
     else:
-        if (nrm_config["debug"]>6): print "DB: Held exists=", id, "=", mObj.id        
+        if (nrm_config["debug"]>6): utils.nprint("DB: Held exists=", id, "=", mObj.id)        
 
 def update_held(s, id, heldmode=None, description=None, userid=None, phase=None, state=None, schedule_begin=None, schedule_end=None, schedule_expiration=None, schedule_refid=None, bandwidth_az=0, bandwidth_za=0, fix_a=None, fix_a_ingress=0, fix_a_egress=0, fix_a_port_urn=None, fix_a_vlan_id=0, fix_z=None, fix_z_ingress=0, fix_z_egress=0, fix_z_port_urn=None, fix_z_vlan_id=0):
     mObj = s.query(oHeld).filter(oHeld.id == id).first()
@@ -1195,14 +1196,14 @@ def update_held(s, id, heldmode=None, description=None, userid=None, phase=None,
             mObj.fix_z_vlan_id = fix_z_vlan_id
         s.add(mObj)
         s.commit()
-        if (nrm_config["debug"]>6): print "DB: Held updated=", id, "=", mObj.id
+        if (nrm_config["debug"]>6): utils.nprint("DB: Held updated=", id, "=", mObj.id)
     else:
-        if (nrm_config["debug"]>6): print "DB: Held does not exists=", id, "=", id        
+        if (nrm_config["debug"]>6): utils.nprint("DB: Held does not exists=", id, "=", id)        
 
 def insert_held_value(s, id, key, value):
     mObj = s.query(oHeld).filter(oHeld.id == id).first()
     if mObj is None:
-        if (nrm_config["debug"]>6): print "DB: Held does not exists=", id, "=", id
+        if (nrm_config["debug"]>6): utils.nprint("DB: Held does not exists=", id, "=", id)
         raise ValueError("No Held id found.")
 
     if (key.lower() == "id"):
@@ -1249,21 +1250,21 @@ def insert_held_value(s, id, key, value):
         mObj.fix_z_port_urn = value
     elif (key.lower() == "fix_z_vlan_id"):
         mObj.fix_z_vlan_id = value
-        if (nrm_config["debug"]>6): print "DB: Held key not found: ", key
+        if (nrm_config["debug"]>6): utils.nprint("DB: Held key not found: ", key)
         return "Held key not found"
     s.add(mObj)
     s.commit()
-    if (nrm_config["debug"]>6): print "DB: Held updated=", id, "=", mObj.id
+    if (nrm_config["debug"]>6): utils.nprint("DB: Held updated=", id, "=", mObj.id)
     
 def display_db(s):
     allJunctions = s.query(oJunction).all();
-    if (nrm_config["debug"]>7): print "\nDB: num junctions = ", len(allJunctions)
+    if (nrm_config["debug"]>7): utils.nprint("\nDB: num junctions = ", len(allJunctions))
     jDetails = [{"id": f.id, "name": f.name, "port_urn": f.port_urn, "vlan_expression": f.vlan_expression, "ingress_bandwidth": f.ingress_bandwidth, "egress_bandwidth": f.egress_bandwidth} for f in allJunctions]
-    if (nrm_config["debug"]>9): print (json.dumps(jDetails, indent = 4))
+    if (nrm_config["debug"]>9): print(json.dumps(jDetails, indent = 4))
 
     allHelds = s.query(oHeld).all();
-    if (nrm_config["debug"]>7): print "\nDB: num helds = ", len(allHelds);
+    if (nrm_config["debug"]>7): utils.nprint("\nDB: num helds = ", len(allHelds));
     hDetails = [{"id": t.id, "id_name": t.pipe_a.id, "name": t.pipe_a.name, "vlan_expression":t.pipe_a.vlan_expression} for t in allHelds]
-    if (nrm_config["debug"]>9): print (json.dumps(hDetails, indent = 4))
-    if (nrm_config["debug"]>7): print "DB: Printed database successfully"
+    if (nrm_config["debug"]>9): print(json.dumps(hDetails, indent = 4))
+    if (nrm_config["debug"]>7): utils.nprint("DB: Printed database successfully")
 

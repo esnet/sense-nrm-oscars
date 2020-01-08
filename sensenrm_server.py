@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -36,6 +36,7 @@ import gzip
 import zlib
 #import json
 
+import sensenrm_utils as utils
 from sensenrm_config import ssl_config, nrm_config
 import sensenrm_db
 import sensenrm_oscars
@@ -146,13 +147,13 @@ class ModelsAPI(Resource):
     def __init__(self):
         # current=true&summary=false&encode=false
         if (nrm_config["debug"]>3): 
-            print "SVC:MODELS INIT"
+            utils.nprint("SVC:MODELS INIT")
             #request.environ.get('HTTP_X_MYHOST')
             #request.environ.get('HTTP_X_SSL_CLIENT_VERIFY')
             #request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
             #request.environ.get('HTTP_X_REAL_IP')
-            print "SVC: MODEL_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
-            print "SVC: MODEL_SSL_IP:", request.environ.get('HTTP_X_REAL_IP')
+            utils.nprint("SVC: MODEL_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
+            utils.nprint("SVC: MODEL_SSL_IP:", request.environ.get('HTTP_X_REAL_IP'))
         #udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         #with mydb_session() as s:
         #    results = sensenrm_db.validate_user(s, udn)
@@ -162,13 +163,13 @@ class ModelsAPI(Resource):
         #        self.reqparse.add_argument('summary', type = str, default = "false")
         #        self.reqparse.add_argument('encode', type = str, default = "false")
         #        self.models = nrmmodels.getModel()
-        #        if (nrm_config["debug"]>3): print "SVC: MODELS INIT DONE"
+        #        if (nrm_config["debug"]>3): utils.nprint("SVC: MODELS INIT DONE")
         #    else:
         #        self.models = "UNAUTHORIZED_USER"
         super(ModelsAPI, self).__init__()
     
     def get(self):
-        if (nrm_config["debug"]>3): print "SVC: MODELS GET"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: MODELS GET")
 
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
@@ -176,17 +177,17 @@ class ModelsAPI(Resource):
             if results:
                 mymodels,status = nrmmodels.getModel()
                 #mymodels,last_modtime,status = nrmmodels.getModel()
-                if (nrm_config["debug"]>3): print "SVC: MODELS INIT DONE"
+                if (nrm_config["debug"]>3): utils.nprint("SVC: MODELS INIT DONE")
                 if status:
-                    if (nrm_config["debug"]>3): print "SVC: MODELS RETURNED"
-                    #if (nrm_config["debug"]>9): print mymodels
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: MODELS RETURNED")
+                    #if (nrm_config["debug"]>9): utils.nprint(mymodels)
                     return marshal(mymodels, model_fields)
                     #mycontent = marshal(mymodels, model_fields)
                     #myresp = make_response(jsonify(mycontent))
                     #myresp.status_code = 200
                     #return myresp
                 else:
-                    if (nrm_config["debug"]>3): print "SVC: MODELS NO_CHANGES HERE"
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: MODELS NO_CHANGES HERE")
                     return marshal(mymodels, model_fields)
                     #return {'model': str("NO_CHANGES")}, 304
                     #my_lasttime = time_rfc1123_from_datetime(last_modtime)
@@ -200,17 +201,17 @@ class ModelsAPI(Resource):
                     #return myresp
             else:
                 mymodels = "UNAUTHORIZED_USER"
-                if (nrm_config["debug"]>3): print "SVC: MODELS 403 INVALID_USER"
+                if (nrm_config["debug"]>3): utils.nprint("SVC: MODELS 403 INVALID_USER")
                 return {'model': str("UNAUTHORIZED_USER")}, 403
 
     def post(self):
-        if (nrm_config["debug"]>3): print "SVC: MODELS POST"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: MODELS POST")
         args = self.reqparse.parse_args()
         return {'models': marshal(self.models, model_fields)}, 201
 
 class DeltasAPI(Resource):
     def __init__(self):
-        if (nrm_config["debug"]>3): print "SVC: DELTAS INIT"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: DELTAS INIT")
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('id', type = str, location = 'json')
         self.reqparse.add_argument('lastModified', type = str, location = 'json')
@@ -221,23 +222,23 @@ class DeltasAPI(Resource):
     
     def get(self):
         if (nrm_config["debug"]>3): 
-            print "SVC: DELTAS GET ID=", deltaid
+            utils.nprint("SVC: DELTAS GET ID=", deltaid)
         return {'deltas': marshal(deltas, delta_fields)}
 
     def post(self):
         args = self.reqparse.parse_args()
         if (nrm_config["debug"]>3):
-            print "SVC: DELTAS POST ID: ", args['id']
-            print "SVC: DELTAS_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: DELTAS POST ID: ", args['id'])
+            utils.nprint("SVC: DELTAS_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
                 deltas, mystatus =nrmdeltas.processDelta(args, udn)
-                if (nrm_config["debug"]>7): print "SVC: DELTA_POST=", mystatus
+                if (nrm_config["debug"]>7): utils.nprint("SVC: DELTA_POST=", mystatus)
                 rstatus = 201
                 if int(mystatus) != 200: 
-                    if (nrm_config["debug"]>3): print "SVC: DELTA_POST_ERROR=", mystatus
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: DELTA_POST_ERROR=", mystatus)
                     rstatus = mystatus
                 return {'deltas': marshal(deltas, delta_fields)}, rstatus
             else:
@@ -247,7 +248,7 @@ class DeltasAPI(Resource):
 
 class DeltaAPI(Resource):
     def __init__(self):
-        if (nrm_config["debug"]>3): print "SVC: DELTA SUMMARY"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: DELTA SUMMARY")
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('summary', type = str, default = "true")
         self.reqparse.add_argument('deltaid', type = str, location = 'json')
@@ -255,37 +256,37 @@ class DeltaAPI(Resource):
 
     def get(self, deltaid):
         if (nrm_config["debug"]>3): 
-            print "SVC: DELTA GET_ID=", deltaid
-            print "SVC: DELTA_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: DELTA GET_ID=", deltaid)
+            utils.nprint("SVC: DELTA_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
                 status, phase = nrmdeltas.getDelta(deltaid, udn) # Status
-                if (nrm_config["debug"]>3): print "SVC: DELTA SUMMARY=", status
+                if (nrm_config["debug"]>3): utils.nprint("SVC: DELTA SUMMARY=", status)
                 return {'state': str(phase), 'deltaid': str(deltaid)}, status
             else:
                 return {'state': str("UNAUTHORIZED_USER"), 'deltaid': str(deltaid)}, 403
 
 class CommitsAPI(Resource):
     def __init__(self):
-        if (nrm_config["debug"]>3): print "SVC: COMMIT"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: COMMIT")
         super(CommitsAPI, self).__init__()
 
     def put(self, deltaid):
         if (nrm_config["debug"]>3): 
-            print "SVC: COMMIT PUT ID=", deltaid
-            print "SVC: COMMIT_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: COMMIT PUT ID=", deltaid)
+            utils.nprint("SVC: COMMIT_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
                 status = nrmcommits.commit(deltaid, udn)
                 if status:
-                    if (nrm_config["debug"]>3): print "SVC: COMMIT_OK"
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: COMMIT_OK")
                     return {'result': "COMMITTED"}, 200
                 else:
-                    if (nrm_config["debug"]>3): print "SVC: COMMIT_FAILED"
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: COMMIT_FAILED")
                     return {'result': "FAILED"}, 404
             else:
                 return {'result': str("FAILED:UNAUTHORIZED_USER")}, 403
@@ -293,37 +294,37 @@ class CommitsAPI(Resource):
         return {'result': True}, 200
 
     def get(self):
-        if (nrm_config["debug"]>3): print "SVC: COMMIT GET"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: COMMIT GET")
         return {'result': True}, 200
 
     def post(self):
         args = self.reqparse.parse_args()
         if (nrm_config["debug"]>3):
-            print "SVC: COMMIT POST ID=", args['id']
+            utils.nprint("SVC: COMMIT POST ID=", args['id'])
         return {'result': True}, 201
 
 class CancelAPI(Resource):
     def __init__(self):
-        if (nrm_config["debug"]>3): print "SVC: CANCEL"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: CANCEL")
         super(CancelAPI, self).__init__()
 
     def put(self, deltaid):
         if (nrm_config["debug"]>3): 
-            print "SVC: CANCEL PUT ID=", deltaid
-            print "SVC: CANCEL_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: CANCEL PUT ID=", deltaid)
+            utils.nprint("SVC: CANCEL_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
                 status, resp = nrmcancel.cancel(deltaid, udn, "")
                 if status == 200:
-                    if (nrm_config["debug"]>3): print "SVC: CANCEL_OK:", status
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: CANCEL_OK:", status)
                     return {'result': "CANCELED" }, status
                 elif status == 400:
-                    if (nrm_config["debug"]>3): print "SVC: CANCELLED_with_400:", status
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: CANCELLED_with_400:", status)
                     return {'result': "CANCELED" }, 200
                 else:
-                    if (nrm_config["debug"]>3): print "SVC: CANCEL_FAILED:", status
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: CANCEL_FAILED:", status)
                     return {'result': "FAILED", 'mesg': str(resp)}, status
             else:
                 return {'result': str("FAILED"), 'mesg': str("UNAUTHORIZED_USER")}, 403
@@ -331,32 +332,32 @@ class CancelAPI(Resource):
         return {'result': True}, 200
 
     def get(self):
-        if (nrm_config["debug"]>3): print "SVC: CANCEL GET"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: CANCEL GET")
         return {'result': True}, 200
 
     def post(self, deltaid):
-        if (nrm_config["debug"]>3): print "SVC: CANCEL POST ID=", deltaid
+        if (nrm_config["debug"]>3): utils.nprint("SVC: CANCEL POST ID=", deltaid)
         return {'result': True}, 201
 
 class ClearAPI(Resource):
     def __init__(self):
-        if (nrm_config["debug"]>3): print "SVC: CLEAR"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: CLEAR")
         super(ClearAPI, self).__init__()
 
     def put(self, deltaid):
         if (nrm_config["debug"]>3):
-            print "SVC: CLEAR PUT ID=", deltaid
-            print "SVC: CLEAR_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: CLEAR PUT ID=", deltaid)
+            utils.nprint("SVC: CLEAR_SSL_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
                 status, resp = nrmclear.clear(deltaid, udn)
                 if status == 200:
-                    if (nrm_config["debug"]>3): print "SVC: CLEARED"
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: CLEARED")
                     return {'result': "CLEARED"}, status
                 else:
-                    if (nrm_config["debug"]>3): print "SVC: CLEAR_FAILED"
+                    if (nrm_config["debug"]>3): utils.nprint("SVC: CLEAR_FAILED")
                     return {'result': "FAILED", 'mesg': str(resp)}, status
             else:
                 return {'result': str("FAILED"), 'mesg': str("UNAUTHORIZED_USER")}, 403
@@ -364,23 +365,23 @@ class ClearAPI(Resource):
         return {'result': True}, 200
 
     def get(self):
-        if (nrm_config["debug"]>3): print "SVC: CLEAR GET"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: CLEAR GET")
         return {'result': True}, 200
 
     def post(self, deltaid):
         if (nrm_config["debug"]>3): 
-            print "SVC: CLEAR POST ID=", deltaid
+            utils.nprint("SVC: CLEAR POST ID=", deltaid)
         return {'result': True}, 201
 
 ## Administrative calls for authorized users
 class AllDeltasAPI(Resource):
     def __init__(self):
-        if (nrm_config["debug"]>3): print "SVC: ALL_DELTAS"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: ALL_DELTAS")
         super(AllDeltasAPI, self).__init__()
 
     def get(self):
         if (nrm_config["debug"]>3):
-            print "SVC: ALL_DELTAS GET: ", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: ALL_DELTAS GET: ", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
             isauthz = sensenrm_db.validate_user(s, udn)
@@ -393,24 +394,24 @@ class AllDeltasAPI(Resource):
 
     def post(self):
         if (nrm_config["debug"]>3):
-            print "SVC: ALL_DELTAS POST: ", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: ALL_DELTAS POST: ", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         return {'deltas': str("UNAUTHORIZED_ACCESS")}, 403
 
 ## Administrative calls for authorized users
 class AllCancelAPI(Resource):
     def __init__(self):
-        if (nrm_config["debug"]>3): print "SVC: ALL_CANCEL"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: ALL_CANCEL")
         super(AllCancelAPI, self).__init__()
 
     def put(self):
         if (nrm_config["debug"]>3):
-            print "SVC: ALL_CANCEL PUT: ", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
+            utils.nprint("SVC: ALL_CANCEL PUT: ", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
         udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
         with mydb_session() as s:
             results = sensenrm_db.validate_user(s, udn)
             if results:
                 status, allids = nrmcancel.cancelall(udn)
-                if (nrm_config["debug"]>3): print "SVC: ALL_CANCEL:", status
+                if (nrm_config["debug"]>3): utils.nprint("SVC: ALL_CANCEL:", status)
                 return {'result': str(status), 'deltas': str(allids) }, 200
             else:
                 return {'result': str("FAILED"), 'mesg': str("UNAUTHORIZED_USER")}, 403
@@ -418,11 +419,11 @@ class AllCancelAPI(Resource):
         return {'result': False}, 201
 
     def get(self):
-        if (nrm_config["debug"]>3): print "SVC: ALL_CANCEL GET"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: ALL_CANCEL GET")
         return {'result': False}, 201
 
     def post(self):
-        if (nrm_config["debug"]>3): print "SVC: ALL_CANCEL POST"
+        if (nrm_config["debug"]>3): utils.nprint("SVC: ALL_CANCEL POST")
         return {'result': False}, 201
 
 ## ########################
@@ -442,9 +443,9 @@ def index():
 @nrm_application.route('/info')
 def info():
     if (nrm_config["debug"]>2):
-        #print "SVC: INFO_1: ", request.__dict__
-        print "SVC: INFO_2: ", request.headers
-        #print "SVC: INFO_3: ", request.environ
+        #utils.nprint("SVC: INFO_1: ", request.__dict__)
+        utils.nprint("SVC: INFO_2: ", request.headers)
+        #utils.nprint("SVC: INFO_3: ", request.environ)
     return """
 MRM-info: {}
 Version-info: {}
@@ -459,10 +460,10 @@ IP: {}
 @nrm_application.route('/sslinfo')
 def sslinfo():
     if (nrm_config["debug"]>0):
-        print "SVC: SSLINFO_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
-        #print "SSL_0: ", request.__dict__
-        #print "SSL_1: ", request.headers
-        #print "SSL_2: ", request.environ
+        utils.nprint("SVC: SSLINFO_DN:", request.environ.get('HTTP_X_SSL_CLIENT_S_DN'))
+        #utils.nprint("SSL_0: ", request.__dict__)
+        #utils.nprint("SSL_1: ", request.headers)
+        #utils.nprint("SSL_2: ", request.environ)
     udn = request.environ.get('HTTP_X_SSL_CLIENT_S_DN')
     vuser = "UNAUTHORIZED_USER"
     with mydb_session() as s:

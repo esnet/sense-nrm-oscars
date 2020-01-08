@@ -1,5 +1,5 @@
 #
-# SENSE Resource Manager (SENSE-RM) Copyright (c) 2018, The Regents
+# SENSE Resource Manager (SENSE-RM) Copyright (c) 2018-2020, The Regents
 # of the University of California, through Lawrence Berkeley National
 # Laboratory (subject to receipt of any required approvals from the
 # U.S. Dept. of Energy).  All rights reserved.
@@ -27,6 +27,9 @@ import argparse
 import fileinput
 from datetime import tzinfo, timedelta, datetime
 import time
+
+def nprint(*args):
+    print(''.join(str(e) for e in args))
 
 oscars_tester = sensenrm_oscars.nrm_oscars_connection()
 mydb_session = sensenrm_db.db_session
@@ -159,103 +162,103 @@ def get_delayed_time(delay_hours):
         days = int((mytime1.hour+delay_hours) / 24)
         hours = delay_hours - 24*(int(delay_hours/24))
         if (nrm_config["debug"]>4):
-            print "DELAYED time=", mytime1.hour
-            print "DELAYED input=", delay_hours
-            print "DELAYED days=", days
-            print "DELAYED hours=", hours
+            nprint("DELAYED time=", mytime1.hour)
+            nprint("DELAYED input=", delay_hours)
+            nprint("DELAYED days=", days)
+            nprint("DELAYED hours=", hours)
         mytime1=datetime(mytime1.year, mytime1.month, mytime1.day+days, mytime1.hour+hours, mytime1.minute, mytime1.second, tzinfo=self.utc)
     return mytime1
 ##############################
 
 
 if (nrminfo):
-    print "INFO tester"
+    nprint("INFO tester")
     resp = oscars_tester.get_info()
 
 if (nrmsslinfo):
-    print "SSL_INFO tester"
+    nprint("SSL_INFO tester")
     resp = oscars_tester.get_sslinfo()
 
 if (nrmsecureinfo):
-    print "PROTECTED_INFO tester"
+    nprint("PROTECTED_INFO tester")
     resp = oscars_tester.get_protected_info()
 
 if (nrmavailtopo):
-    print "TOPO tester"
+    nprint("TOPO tester")
     resp = oscars_tester.get_avail_topo()
 
 if (nrmreservedlist):
-    print "ReservedList tester"
+    nprint("ReservedList tester")
     resp = oscars_tester.get_reserved()
 
 if (gettoken):
-    print "Token tester"
+    nprint("Token tester")
     uid = ""
     upasswd = ""
     resp = oscars_tester.get_token(uid, upasswd)
 
 if (getconnid):
-    print "ConnectionID tester"
+    nprint("ConnectionID tester")
     connid = oscars_tester.get_conn_id()
-    print "CONNECTION_ID=", connid
+    nprint("CONNECTION_ID=", connid)
 
 if (getheld):
     connid = None
     if (connid is None) or (len(connid) == 0):
-        print "Getting Connection ID first"
+        nprint("Getting Connection ID first")
         connid = oscars_tester.get_conn_id()
-    print "CONNECTION_ID=", connid
+    nprint("CONNECTION_ID=", connid)
     
     starttime = str(time_iso8601(datetime.utcnow()))
     endtime = str(time_iso8601(get_delayed_time(24)))
     mypce=[]
     if pcedone is False:
-        print "Getting PCE next"
+        nprint("Getting PCE next")
         mypce = oscars_tester.get_pcelist(connid, deltaid, pcelist2, starttime, endtime)
         pcedone=True
         
     myfix=[]
     for a in pcelist2:
-        print "junction=", a, " / ", a.split(':')[0], " / vlanId=", vlanid2[pcelist2.index(a)]
+        nprint("junction=", a, " / ", a.split(':')[0], " / vlanId=", vlanid2[pcelist2.index(a)])
         nfix = sensenrm_oscars.nrm_fixture(a.split(':')[0], ingr, egr, a, vlanid2[pcelist2.index(a)])
         myfix.append(nfix)
             
-    print "HELD tester"
+    nprint("HELD tester")
     resp = oscars_tester.get_conn_held(connid, deltaid, pcelist2, mypce, myfix, starttime, endtime)
 
 
 if (getheldmulti):
     connid = None
     if (connid is None) or (len(connid) == 0):
-        print "Getting Connection ID first"
+        nprint("Getting Connection ID first")
         connid = oscars_tester.get_conn_id()
-    print "CONNECTION_ID=", connid
+    nprint("CONNECTION_ID=", connid)
     
     starttime = str(time_iso8601(datetime.utcnow()))
     endtime = str(time_iso8601(get_delayed_time(24)))
     
     mypce=[]
     if pcedone is False:
-        print "Getting PCE next for multipoint"
+        nprint("Getting PCE next for multipoint")
         mypce = oscars_tester.get_pcelist(connid, deltaid, pcelist3, starttime, endtime)
         pcedone=True
         
     myfix=[]
     for a in pcelist3:
-        print "junction=", a, " / ", a.split(':')[0], " / vlanId=", vlanid3[pcelist3.index(a)]
+        nprint("junction=", a, " / ", a.split(':')[0], " / vlanId=", vlanid3[pcelist3.index(a)])
         nfix = sensenrm_oscars.nrm_fixture(a.split(':')[0], ingr, egr, a, vlanid3[pcelist3.index(a)])
         myfix.append(nfix)
 
-    print "HELD tester"
+    nprint("HELD tester")
     resp = oscars_tester.get_conn_held(connid, deltaid, pcelist3, mypce, myfix, starttime, endtime)
 
 
 if (getpce):
-    print "PCE tester"
+    nprint("PCE tester")
     if (len(connid) == 0) or (connid is None):
-        print "Getting Connection ID first"
+        nprint("Getting Connection ID first")
         connid = oscars_tester.get_conn_id()
-    print "CONNECTION_ID=", connid
+    nprint("CONNECTION_ID=", connid)
 
     starttime = str(time_iso8601(datetime.utcnow()))
     endtime = str(time_iso8601(get_delayed_time(24)))
@@ -263,31 +266,31 @@ if (getpce):
     pcedone = oscars_tester.get_pcelist(connid, deltaid, pcelist2, starttime, endtime)
 
 if (getcommit):
-    print "Commit testger"
+    nprint("Commit testger")
     if (len(connid) == 0) or (connid is None):
-        print "Getting Connection ID first"
+        nprint("Getting Connection ID first")
         exit(1)
-    print "CONNECTION_ID=", connid
+    nprint("CONNECTION_ID=", connid)
     resp = oscars_tester.get_commit(connid)
 
 if (getclear):
-    print "Clear tester"
+    nprint("Clear tester")
     if (len(connid) == 0) or (connid is None):
-        print "Getting Connection ID first"
+        nprint("Getting Connection ID first")
         exit(1)
     status, resp = oscars_tester.get_clear(connid)
 
 if (getcancel):
-    print "Cancel tester"
+    nprint("Cancel tester")
     if (len(connid) == 0) or (connid is None):
-        print "Getting Connection ID first"
+        nprint("Getting Connection ID first")
         exit(1)
     status, resp = oscars_tester.get_cancel(connid)
 
 if (getstatus):
-    print "Status tester"
+    nprint("Status tester")
     if (len(connid) == 0) or (connid is None):
-        print "Getting Connection ID first"
+        nprint("Getting Connection ID first")
         exit(1)
     resp = oscars_tester.get_status(connid)
 

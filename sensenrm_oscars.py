@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -25,13 +25,13 @@ import os
 import time
 import uuid
 import urllib3
-import httplib
+import http.client  # OLD http.client
 import logging
 import json
 import sys
 import argparse
 import fileinput
-from urlparse import urlparse
+from urllib.parse import urlparse   # OLD urllib.parse
 import requests
 import ssl
 from wsgiref.handlers import format_date_time
@@ -44,6 +44,7 @@ import gzip
 import zlib
 import enum 
 
+import sensenrm_utils as utils
 from  sensenrm_config import oscars_config, nrm_config, log_config
 import sensenrm_db
 
@@ -167,10 +168,10 @@ def get_unixtime_from_deltatime(date_with_tz):
     dt_utc = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f")
     dt = dt_utc.replace(tzinfo=FixedOffset(tz))
     if (nrm_config["debug"]>9): 
-        print "OSCARS: datetime=", dt
+        utils.nprint("OSCARS: datetime=", dt)
     myutime1 = get_unixtime_from_datetime(dt)
     if (nrm_config["debug"]>9):
-        print "OSCARS: unixtime=", myutime1
+        utils.nprint("OSCARS: unixtime=", myutime1)
     return myutime1
 
 #class nrm_user(object):
@@ -364,12 +365,12 @@ class nrm_junction(object):
     def findkeyvaluedict(self, keystr):
         for keyv in keystr:
             value = keystr[keyv]
-            if (nrm_config["debug"]>9): print "KD=", keyv
+            if (nrm_config["debug"]>9): utils.nprint("KD=", keyv)
             self.assign(keyv, value)
             
     def findkeyvaluelist(self, keystr):
         if (len(keystr) == 0) :
-            if (nrm_config["debug"]>9): print "VL=0"
+            if (nrm_config["debug"]>9): utils.nprint("VL=0")
         else :
             keystri = iter(keystr)
             for value in keystri:
@@ -378,44 +379,44 @@ class nrm_junction(object):
                 elif (type(value) is list):
                     self.findkeyvaluelist(value)
                 else:
-                    if (nrm_config["debug"]>9): print "VL=", value
+                    if (nrm_config["debug"]>9): utils.nprint("VL=", value)
 
     def assign(self, key, value):
         def vlans():
-            if (nrm_config["debug"]>9): print "#vlanRanges=", value
+            if (nrm_config["debug"]>9): utils.nprint("#vlanRanges=", value)
             self.findkeyvaluelist(value)
         def floor():
-            if (nrm_config["debug"]>9): print "#floor=", value
+            if (nrm_config["debug"]>9): utils.nprint("#floor=", value)
             self.vlanr.floor = value
             if (self.vlanr.floor is 0):
-                if (nrm_config["debug"]>9): print "##floor=ZERO?"
+                if (nrm_config["debug"]>9): utils.nprint("##floor=ZERO?")
             else:
                 if (self.vlanr.ceiling is not 0):
                     self.vlanRanges.append(self.vlanr)
                     self.vlanr = nrm_vlanRange()
-                    if (nrm_config["debug"]>9): print "##floor=", self.vlanr.floor
+                    if (nrm_config["debug"]>9): utils.nprint("##floor=", self.vlanr.floor)
                 else:
-                    if (nrm_config["debug"]>9): print "##floor_ceiling=HUH?"
+                    if (nrm_config["debug"]>9): utils.nprint("##floor_ceiling=HUH?")
         def ceiling():
-            if (nrm_config["debug"]>9): print "#ceiling=", value
+            if (nrm_config["debug"]>9): utils.nprint("#ceiling=", value)
             self.vlanr.ceiling = value
             if (self.vlanr.ceiling is 0): 
-                if (nrm_config["debug"]>9): print "##ceiling=ZERO?"
+                if (nrm_config["debug"]>9): utils.nprint("##ceiling=ZERO?")
             else:
                 if (self.vlanr.floor is not 0):
                     self.vlanRanges.append(self.vlanr)
                     self.vlanr = nrm_vlanRange()
-                    if (nrm_config["debug"]>9): print "##ceiling", self.vlanr.ceiling
+                    if (nrm_config["debug"]>9): utils.nprint("##ceiling", self.vlanr.ceiling)
                 else:
-                    if (nrm_config["debug"]>9): print "##ceiling_floor=ZERO"
+                    if (nrm_config["debug"]>9): utils.nprint("##ceiling_floor=ZERO")
         def vlanExpression():
-            if (nrm_config["debug"]>9): print "#vlanExpression", value
+            if (nrm_config["debug"]>9): utils.nprint("#vlanExpression", value)
             self.vlanExpression = value
         def ingressBandwidth():
-            if (nrm_config["debug"]>9): print "#ingressBandwidth", value
+            if (nrm_config["debug"]>9): utils.nprint("#ingressBandwidth", value)
             self.ingressBandwidth = value
         def egressBandwidth():
-            if (nrm_config["debug"]>9): print "#egressBandwidth", value
+            if (nrm_config["debug"]>9): utils.nprint("#egressBandwidth", value)
             self.egressBandwidth = value
         
         options = {"vlanRanges" : vlans,
@@ -426,10 +427,10 @@ class nrm_junction(object):
                         "egressBandwidth" : egressBandwidth,
         }
         
-        if options.has_key(key):
+        if key in options:  # OLD: if options.has_key(key):
             options[key]()
         else:
-            if (nrm_config["debug"]>9): printf("OSCARS: JUNCTION assign NONE\n");
+            if (nrm_config["debug"]>9): utils.nprintf("OSCARS: JUNCTION assign NONE\n");
         
     def indented_show(self):
         def pvlans(vlanrs):
@@ -439,12 +440,12 @@ class nrm_junction(object):
                 if i is not len(vlanrs)-1:
                     mystr = mystr + ","
             return mystr
-        print self.junction_name, ": {" 
-        print "\t\"vlanRanges\" : [", pvlans(self.vlanRanges), "],"
-        print "\t\"vlanExpression\" : \"" + self.vlanExpression + "\",\n"
-        print "\t\"ingressBandwidth\" : ", self.ingressBandwidth, ","
-        print "\t\"egressBandwidth\" : ", self.egressBandwidth
-        print "}"
+        utils.nprint(self.junction_name, ": {") 
+        utils.nprint("\t\"vlanRanges\" : [", pvlans(self.vlanRanges), "],")
+        utils.nprint("\t\"vlanExpression\" : \"" + self.vlanExpression + "\",\n")
+        utils.nprint("\t\"ingressBandwidth\" : ", self.ingressBandwidth, ",")
+        utils.nprint("\t\"egressBandwidth\" : ", self.egressBandwidth)
+        utils.nprint("}")
     
 class nrm_pce(object):
     id = ""  # delta id
@@ -490,41 +491,41 @@ class nrm_pce(object):
                 if i is not len(vlanrs)-1:
                     mystr = mystr + ","
             return mystr
-        print "UUID: ", self.id
-        print "ConnID: ", self.held_id
-        print "junction_a: ", self.junction_a
-        print "junction_b: ", self.junction_b
-        print "\"shortest\": {" 
-        print "\t\"cost\" : " + str(self.cost) + ","
-        print "\t\"azEro\" : ", self.azEro, ","
-        print "\t\"zaEro\" : ", self.zaEro, ","
-        print "\t\"azAvailable\" : " + str(self.azAvailable) + ","
-        print "\t\"zaAvailable\" : ", str(self.zaAvailable), ","
-        print "\t\"azBaseline\" : ", str(self.azBaseline), ","
-        print "\t\"zaBaseline\" : ", str(self.zaBaseline)
-        print "}"
+        utils.nprint("UUID: ", self.id)
+        utils.nprint("ConnID: ", self.held_id)
+        utils.nprint("junction_a: ", self.junction_a)
+        utils.nprint("junction_b: ", self.junction_b)
+        utils.nprint("\"shortest\": {") 
+        utils.nprint("\t\"cost\" : " + str(self.cost) + ",")
+        utils.nprint("\t\"azEro\" : ", self.azEro, ",")
+        utils.nprint("\t\"zaEro\" : ", self.zaEro, ",")
+        utils.nprint("\t\"azAvailable\" : " + str(self.azAvailable) + ",")
+        utils.nprint("\t\"zaAvailable\" : ", str(self.zaAvailable), ",")
+        utils.nprint("\t\"azBaseline\" : ", str(self.azBaseline), ",")
+        utils.nprint("\t\"zaBaseline\" : ", str(self.zaBaseline))
+        utils.nprint("}")
     
     def assign(self, key, value):
         def azEro():
-            if (nrm_config["debug"]>9): print "#azEro=", value
+            if (nrm_config["debug"]>9): utils.nprint("#azEro=", value)
             self.findkeyvaluelistaz(value)
         def zaEro():
-            if (nrm_config["debug"]>9): print "#zaEro=", value
+            if (nrm_config["debug"]>9): utils.nprint("#zaEro=", value)
             self.findkeyvaluelistza(value)
         def cost():
-            if (nrm_config["debug"]>9): print "#cost", value
+            if (nrm_config["debug"]>9): utils.nprint("#cost", value)
             self.cost = float(value)
         def azAvailable():
-            if (nrm_config["debug"]>9): print "#azAvailable", value
+            if (nrm_config["debug"]>9): utils.nprint("#azAvailable", value)
             self.azAvailable = int(value)
         def zaAvailable():
-            if (nrm_config["debug"]>9): print "#zaAvailable", value
+            if (nrm_config["debug"]>9): utils.nprint("#zaAvailable", value)
             self.zaAvailable = int(value)
         def azBaseline():
-            if (nrm_config["debug"]>9): print "#azBaseline", value
+            if (nrm_config["debug"]>9): utils.nprint("#azBaseline", value)
             self.azBaseline = int(value)
         def zaBaseline():
-            if (nrm_config["debug"]>9): print "#zaBaseline", value
+            if (nrm_config["debug"]>9): utils.nprint("#zaBaseline", value)
             self.zaBaseline = int(value)
 
         options = {"cost" : cost,
@@ -536,10 +537,10 @@ class nrm_pce(object):
                         "zaBaseline" : zaBaseline,
         }
         
-        if options.has_key(key):
+        if key in options:  # OLD: if options.has_key(key):
             options[key]()
         else:
-            if (nrm_config["debug"]>9): print "OSCARS: PCE assign NONE";
+            if (nrm_config["debug"]>9): utils.nprint("OSCARS: PCE assign NONE");
         
     def assign_value(self, key, value):
         
@@ -572,38 +573,38 @@ class nrm_pce(object):
         
 
     def findkeyvaluedict(self, keystr):
-        if (nrm_config["debug"]>9): print "OSCARS: PCE findkeyvaluedict"
+        if (nrm_config["debug"]>9): utils.nprint("OSCARS: PCE findkeyvaluedict")
         for keyv in keystr:
             value = keystr[keyv]
-            if (nrm_config["debug"]>9): print "#KD=", keyv
+            if (nrm_config["debug"]>9): utils.nprint("#KD=", keyv)
             self.assign(keyv, value)
 
     def findkeyvaluelistaz(self, keystr):
-        if (nrm_config["debug"]>9): print "OSCARS: PCE findkeyvaluelistaz"
+        if (nrm_config["debug"]>9): utils.nprint("OSCARS: PCE findkeyvaluelistaz")
         if (len(keystr) == 0) :
-            if (nrm_config["debug"]>9): print "#VLaz="
+            if (nrm_config["debug"]>9): utils.nprint("#VLaz=")
         else :
-            if (nrm_config["debug"]>9): print "#MYLISTaz: ", keystr
+            if (nrm_config["debug"]>9): utils.nprint("#MYLISTaz: ", keystr)
             keystri = iter(keystr)
             for value in keystri:
-                if (nrm_config["debug"]>9): print "#KL2az=", value
+                if (nrm_config["debug"]>9): utils.nprint("#KL2az=", value)
                 for keyv in value:
                     myurnvalue = value[keyv]
-                    if (nrm_config["debug"]>9): print "#LISTaz: ", keyv, "=", myurnvalue
+                    if (nrm_config["debug"]>9): utils.nprint("#LISTaz: ", keyv, "=", myurnvalue)
                     self.azEro.append(str(myurnvalue))
 
     def findkeyvaluelistza(self, keystr):
-        if (nrm_config["debug"]>9): print "OSCARS: PCE findkeyvaluelistza"
+        if (nrm_config["debug"]>9): utils.nprint("OSCARS: PCE findkeyvaluelistza")
         if (len(keystr) == 0) :
-            if (nrm_config["debug"]>9): print "#VLza="
+            if (nrm_config["debug"]>9): utils.nprint("#VLza=")
         else :
-            if (nrm_config["debug"]>9): print "#MYLISTza: ", keystr
+            if (nrm_config["debug"]>9): utils.nprint("#MYLISTza: ", keystr)
             keystri = iter(keystr)
             for value in keystri:
-                if (nrm_config["debug"]>9): print "#KL2za=", value
+                if (nrm_config["debug"]>9): utils.nprint("#KL2za=", value)
                 for keyv in value:
                     myurnvalue = value[keyv]
-                    if (nrm_config["debug"]>9): print "#LISTza: ", keyv, "=", myurnvalue
+                    if (nrm_config["debug"]>9): utils.nprint("#LISTza: ", keyv, "=", myurnvalue)
                     self.zaEro.append(str(myurnvalue))
 
 class nrm_oscars_json_parser(object):
@@ -619,15 +620,15 @@ class nrm_oscars_json_parser(object):
             if (key == "shortest") :  # OR shortest or fits
                 valuestr = jstr[key]
                 mypce=nrm_pce(id, deltaid, a, b, bt, et)
-                if (nrm_config["debug"]>9): print "#KEY=", key
+                if (nrm_config["debug"]>9): utils.nprint("#KEY=", key)
                 if (type(valuestr) is dict):
-                    if (nrm_config["debug"]>9): print "#DICT"
+                    if (nrm_config["debug"]>9): utils.nprint("#DICT")
                     mypce.findkeyvaluedict(valuestr)
                 elif (valuestr is None):
-                    if (nrm_config["debug"]>9): print "#Value is None"
+                    if (nrm_config["debug"]>9): utils.nprint("#Value is None")
                     mypce.findkeyvaluedict(valuestr)
                 else:
-                    if (nrm_config["debug"]>9): print "#LIST VALUE=", valuestr
+                    if (nrm_config["debug"]>9): utils.nprint("#LIST VALUE=", valuestr)
                     mypce.findkeyvaluedict(valuestr)
                 self.pce.append(mypce)
         return self.pce
@@ -636,11 +637,11 @@ class nrm_oscars_json_parser(object):
         for key in jstr:
             valuestr = jstr[key]
             myjunction=nrm_junction(key);
-            if (nrm_config["debug"]>9): print "#KEY=", key
+            if (nrm_config["debug"]>9): utils.nprint("#KEY=", key)
             if (type(valuestr) is dict):
                 myjunction.findkeyvaluedict(valuestr)
             else:
-                if (nrm_config["debug"]>9): print "#VALUE=", valuestr
+                if (nrm_config["debug"]>9): utils.nprint("#VALUE=", valuestr)
             self.junctions.append(myjunction)
         return self.junctions
     
@@ -666,7 +667,7 @@ class nrm_oscars_connection(object):
         return 'https://' + self.oscars_url + path
 
     def get_token(self, uid, upasswd):
-        if (nrm_config["debug"]>7): print "OSCARS: GetToken"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: GetToken")
 #        if oscars_config["default_user"] == None:
 #            raise Exception('Cannot get oscars_config["default_user"]. Edit sensenrm_config.py for oscars_config.default_user')
 #        else:
@@ -679,65 +680,65 @@ class nrm_oscars_connection(object):
             'username': uid,
             'password': upasswd
             }, verify=False)
-        if (nrm_config["debug"]>7): print "OSCARS: GetToken DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: GetToken DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                print "OSCARS: Token FAILED:", resp._content
+                utils.nprint("OSCARS: Token FAILED:", resp._content)
             raise Exception('OSCARS: Cannot GetToken: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
-            print "OSCARS: Token_UID: ", uid
-            print "OSCARS: Token:", resp._content
+            utils.nprint("OSCARS: Token_UID: ", uid)
+            utils.nprint("OSCARS: Token:", resp._content)
         return str(resp._content)
     
     def get_sslinfo(self):
-        if (nrm_config["debug"]>7): print "OSCARS: SSLinfo"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: SSLinfo")
         resp = requests.get(self._surl('/api/version'), verify=False)
         if (nrm_config["debug"]>7): 
-            print "OSCARS: SSLinfo DONE: ", resp.status_code
+            utils.nprint("OSCARS: SSLinfo DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                print "OSCARS: SSLinfo FAILED:", resp._content
+                utils.nprint("OSCARS: SSLinfo FAILED:", resp._content)
             raise Exception('OSCARS: Cannot get_SSLinfo: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
-            #print "OSCARS: SSLinfo: ", resp.headers['content-type']
-            print "OSCARS: SSLinfo:", resp._content
+            #utils.nprint("OSCARS: SSLinfo: ", resp.headers['content-type'])
+            utils.nprint("OSCARS: SSLinfo:", resp._content)
         return str(resp._content)
             
     def get_info(self):
-        if (nrm_config["debug"]>7): print "OSCARS: Info"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: Info")
         resp = requests.get(self._surl('/api/topo/version'), verify=False)
         if (nrm_config["debug"]>7): 
-            print "OSCARS: Info DONE: ", resp.status_code
+            utils.nprint("OSCARS: Info DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                print "OSCARS: Info FAILED:", resp._content
+                utils.nprint("OSCARS: Info FAILED:", resp._content)
             raise Exception('OSCARS: Cannot get_info: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
-            print "OSCARS: Info:", resp._content
+            utils.nprint("OSCARS: Info:", resp._content)
         return str(resp._content)
 
     def get_protected_info(self):
         with mydb_session() as s:
             thisToken = sensenrm_db.get_group_token(s, "default")
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>7): print "OSCARS: Protected_SSL"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: Protected_SSL")
         resp = requests.get(self._surl('/protected/greeting'), 
                             verify=False, headers=myheaders)
         if (nrm_config["debug"]>7): 
-            print "OSCARS: Protected_SSL DONE: ", resp.status_code
+            utils.nprint("OSCARS: Protected_SSL DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                print "OSCARS: Protected_SSL FAILED:", resp._content
+                utils.nprint("OSCARS: Protected_SSL FAILED:", resp._content)
             raise Exception('OSCARS: Cannot get_protected_info: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
-            print "OSCARS: Protected_SSL:", resp._content
+            utils.nprint("OSCARS: Protected_SSL:", resp._content)
         return str(resp._content)
 
     def writeAvail(self, mytime, acontent):
         timed_file = datetime.fromtimestamp(time.mktime(datetime.now().timetuple())).strftime('%Y%m%d-%H%M%S')
         output_file = log_config["basepath"]+"/avail_" + str(timed_file) + "_" + str(mytime) + ".txt"
         if (nrm_config["debug"]>2):
-            print "OSCARS: AVAIL_OUTPUT_PATH=", output_file
+            utils.nprint("OSCARS: AVAIL_OUTPUT_PATH=", output_file)
         fo = open(output_file, 'w')
         fo.write(acontent)
         fo.close()
@@ -748,22 +749,22 @@ class nrm_oscars_connection(object):
         myutime1 = get_unixtime(0)
         myutime2 = get_unixtime(2)
         if (nrm_config["debug"]>3): 
-            print "OSCARS: GET_MODEL_time=", myutime1, ", ", myutime2
-            # print "HERE_TOPO_00"
+            utils.nprint("OSCARS: GET_MODEL_time=", myutime1, ", ", myutime2)
+            # utils.nprint("HERE_TOPO_00")
         resp = requests.post(self._surl('/api/topo/available'), json={
             'beginning': myutime1,	# java.time.Instant format
             'ending': myutime2
             }, verify=False)
 
         if (nrm_config["debug"]>7): 
-            print "OSCARS: GET_MODEL_DONE: ", resp.status_code
-            # print "HERE_TOPO"
+            utils.nprint("OSCARS: GET_MODEL_DONE: ", resp.status_code)
+            # utils.nprint("HERE_TOPO")
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                print "OSCARS: MODEL_AVAIL FAILED: ", resp._content
+                utils.nprint("OSCARS: MODEL_AVAIL FAILED: ", resp._content)
             raise Exception('OSCARS: Cannot get_avail_topo: {}'.format(resp.status_code))
         if (nrm_config["debug"]>8): 
-            print "OSCARS: MODEL_AVAIL :\n", resp._content
+            utils.nprint("OSCARS: MODEL_AVAIL :\n", resp._content)
             self.writeAvail(str(myutime1), str(resp._content))
         
         ## convert response to formatted output, eventually to SENSE API format
@@ -778,17 +779,17 @@ class nrm_oscars_connection(object):
         return str(resp._content)
 
     def get_reserved(self):
-        if (nrm_config["debug"]>7): print "OSCARS: RESERVED_LIST"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: RESERVED_LIST")
         resp = requests.get(self._surl('/api/conn/simplelist'), verify=False)
 
         if (nrm_config["debug"]>7):
-            print "OSCARS: GET_RESERVED_LIST_DONE: ", resp.status_code
+            utils.nprint("OSCARS: GET_RESERVED_LIST_DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3):
-                print "OSCARS: ReservedList FAILED: ", resp._content
+                utils.nprint("OSCARS: ReservedList FAILED: ", resp._content)
             raise Exception('OSCARS Cannot get ReservedList: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6):
-            print "OSCARS: ReservedList:\n", resp._content
+            utils.nprint("OSCARS: ReservedList:\n", resp._content)
         return str(resp._content)
         
     def get_conn_id(self, groupid):  # e.g. groupid = "default"
@@ -797,24 +798,24 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: ConnID Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>7): print "OSCARS: ConnID"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: ConnID")
         resp = requests.get(self._surl('/protected/conn/generateId'), 
                             verify=False, headers=myheaders)
-        if (nrm_config["debug"]>7): print "OSCARS: ConnID DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: ConnID DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                print "OSCARS: ConnID FAILED: ", resp._content
+                utils.nprint("OSCARS: ConnID FAILED: ", resp._content)
             raise Exception('OSCARS: Cannot GetConnID : {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): 
-            print "OSCARS: ConnID: ", resp._content
-            #print "ConnID TYPE: ", type(resp._content)
+            utils.nprint("OSCARS: ConnID: ", resp._content)
+            #utils.nprint("ConnID TYPE: ", type(resp._content))
 
         with mydb_session() as s:
             sensenrm_db.insert_conn(s, resp._content, groupid)
         return str(resp._content)
     
     def get_pce(self, id, deltaid, src, dest, myutime1, myutime2):
-        if (nrm_config["debug"]>7): print "OSCARS: Path_Computation"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: Path_Computation")
 
         resp = requests.post(self._surl('/api/pce/paths'), json={
             "interval": {
@@ -826,11 +827,11 @@ class nrm_oscars_connection(object):
             "azBw": 0,
             "zaBw": 0
             }, verify=False)
-        if (nrm_config["debug"]>7): print "OSCARS: Path_Computation DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: Path_Computation DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): print "OSCARS: Path_Computation FAILED: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: Path_Computation FAILED: ", resp._content)
             raise Exception('OSCARS: Cannot get_PCE : {}'.format(resp.status_code))
-        if (nrm_config["debug"]>6): print "OSCARS: Path_Computation: ", resp._content
+        if (nrm_config["debug"]>6): utils.nprint("OSCARS: Path_Computation: ", resp._content)
         ## convert response to formatted output, eventually to SENSE API format
         myparser=nrm_oscars_json_parser()
         mypce = myparser.pce_parser(id, deltaid, src, dest, myutime1, myutime2, resp.json())
@@ -846,30 +847,30 @@ class nrm_oscars_connection(object):
         myutime1 = get_unixtime_from_deltatime(starttime)
         myutime2 = get_unixtime_from_deltatime(endtime)
         #if (nrm_config["debug"]>5): 
-        #    print "PCE_time_unixtime=", myutime1, ", ", myutime2
+        #    utils.nprint("PCE_time_unixtime=", myutime1, ", ", myutime2)
 
-        if (nrm_config["debug"]>7): print "OSCARS: Path_Computation_list"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: Path_Computation_list")
         
         jpairs = [(jlist[i],jlist[j]) for i in range(len(jlist)) for j in range(i+1, len(jlist))]
-        if (nrm_config["debug"]>6): print "OSCARS: Junction_Pairs=", jpairs
+        if (nrm_config["debug"]>6): utils.nprint("OSCARS: Junction_Pairs=", jpairs)
         mypce = []
         for a, z in jpairs:
             ja = a.split(':')[0] #oSwitch.id = delta.id:netlab-7750sr12-rt1:9/1/4:port
             jz = z.split(':')[0]
             if (nrm_config["debug"]>7): 
-                print a, z
-                print ja, jz
+                utils.nprint(a, z)
+                utils.nprint(ja, jz)
             if not (ja == jz) :
                 try:
                     mypce = mypce + self.get_pce(id, deltaid, ja, jz, myutime1, myutime2)
                 except Exception as e:
-                    if (nrm_config["debug"]>3): print "OSCARS: PCE EXCEPT: ", e
+                    if (nrm_config["debug"]>3): utils.nprint("OSCARS: PCE EXCEPT: ", e)
                     raise
             else :
-                if (nrm_config["debug"]>7): print "SAME junctions"
+                if (nrm_config["debug"]>7): utils.nprint("SAME junctions")
 
         if (nrm_config["debug"]>9): 
-            print "OSCARS: PRINT DB ALL PCEs"
+            utils.nprint("OSCARS: PRINT DB ALL PCEs")
             with mydb_session() as s:
                 sensenrm_db.display_db_pce(s)
         
@@ -881,14 +882,14 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: CLEAR Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken}
-        if (nrm_config["debug"]>7): print "OSCARS: CLEAR_ID=", connid
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: CLEAR_ID=", connid)
         resp = requests.get(self._surl('/protected/held/clear/')+connid,
             verify=False, headers=myheaders)
-        if (nrm_config["debug"]>7): print "OSCARS: CLEAR DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: CLEAR DONE: ", resp.status_code)
         if resp.status_code == 200:
-            if (nrm_config["debug"]>3): print "OSCARS: CLEAR: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CLEAR: ", resp._content)
         else:
-            if (nrm_config["debug"]>3): print "OSCARS: CLEAR FAILED: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CLEAR FAILED: ", resp._content)
             #raise Exception('OSCARS Cannot CLEAR: {}'.format(resp.status_code))
         return resp.status_code, resp._content
 
@@ -898,15 +899,15 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: COMMIT Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>7): print "OSCARS: COMMIT_ID=", connid
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: COMMIT_ID=", connid)
 
         resp = requests.post(self._surl('/protected/conn/commit'), 
             connid, verify=False, headers=myheaders)
-        if (nrm_config["debug"]>7): print "OSCARS: COMMIT DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: COMMIT DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): print "OSCARS: COMMIT FAILED: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: COMMIT FAILED: ", resp._content)
             raise Exception('OSCARS Cannot COMMIT: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): print "OSCARS: COMMIT: ", resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: COMMIT: ", resp._content)
         return resp.status_code, resp._content
         
     def get_uncommit(self, connid, groupid):
@@ -915,15 +916,15 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: UNCOMMIT Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        if (nrm_config["debug"]>7): print "OSCARS: UNCOMMIT"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: UNCOMMIT")
         resp = requests.post(self._surl('/protected/conn/uncommit'), json={
             'connectionId': connid
             }, verify=False, headers=myheaders)
-        if (nrm_config["debug"]>7): print "OSCARS: UNCOMMIT DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: UNCOMMIT DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): print "OSCARS: UNCOMMIT FAILED: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: UNCOMMIT FAILED: ", resp._content)
             raise Exception('OSCARS:Cannot UNCOMMIT : {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): print "OSCARS: UNCOMMIT: ", resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: UNCOMMIT: ", resp._content)
         return resp.status_code, resp._content
 
     def get_cancel(self, connid, groupid):
@@ -933,48 +934,48 @@ class nrm_oscars_connection(object):
                 raise Exception('OSCARS: CANCEL Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
         if (nrm_config["debug"]>7): 
-            print "OSCARS: CANCEL GROUPID:",groupid
+            utils.nprint("OSCARS: CANCEL GROUPID:",groupid)
         #resp = requests.post(self._surl('/protected/conn/cancel'), 
         resp = requests.post(self._surl('/protected/conn/release'), 
             connid, verify=False, headers=myheaders)
-        if (nrm_config["debug"]>7): print "OSCARS: CANCEL DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: CANCEL DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): print "OSCARS: CANCEL FAILED: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CANCEL FAILED: ", resp._content)
             #raise Exception('OSCARS Cannot CANCEL: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): print "OSCARS: CANCEL: ", resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: CANCEL: ", resp._content)
         return resp.status_code, resp._content
 
     def get_status(self, connid):
-        if (nrm_config["debug"]>7): print "OSCARS: STATUS"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: STATUS")
         resp = requests.get(self._surl('/api/conn/info/'+connid), verify=False)
-        if (nrm_config["debug"]>7): print "OSCARS: STATUS_DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: STATUS_DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): print "OSCARS: STATUS FAILED: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: STATUS FAILED: ", resp._content)
             raise Exception('OSCARS Cannot get STATUS: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): print "OSCARS: STATUS:", resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: STATUS:", resp._content)
         return resp
 
     def dump(self, obj, nested_level=0, output=sys.stdout):
         spacing = '   '
         if type(obj) == dict:
-            print >> output, '%s{' % ((nested_level) * spacing)
-            for k, v in obj.items():
+            print('%s{' % ((nested_level) * spacing), file=output)
+            for k, v in list(obj.items()):
                 if hasattr(v, '__iter__'):
-                    print >> output, '%s%s:' % ((nested_level + 1) * spacing, k)
+                    print('%s%s:' % ((nested_level + 1) * spacing, k), file=output)
                     dump(v, nested_level + 1, output)
                 else:
-                    print >> output, '%s%s: %s' % ((nested_level + 1) * spacing, k, v)
-            print >> output, '%s}' % (nested_level * spacing)
+                    print('%s%s: %s' % ((nested_level + 1) * spacing, k, v), file=output)
+            print('%s}' % (nested_level * spacing), file=output)
         elif type(obj) == list:
-            print >> output, '%s[' % ((nested_level) * spacing)
+            print('%s[' % ((nested_level) * spacing), file=output)
             for v in obj:
                 if hasattr(v, '__iter__'):
                     dump(v, nested_level + 1, output)
                 else:
-                    print >> output, '%s%s' % ((nested_level + 1) * spacing, v)
-            print >> output, '%s]' % ((nested_level) * spacing)
+                    print('%s%s' % ((nested_level + 1) * spacing, v), file=output)
+            print('%s]' % ((nested_level) * spacing), file=output)
         else:
-            print >> output, '%s%s' % (nested_level * spacing, obj)
+            print('%s%s' % (nested_level * spacing, obj), file=output)
     
     
     def get_conn_held(self, connid, deltaid, swdict, mypce, flist, starttime, endtime, groupid):
@@ -983,7 +984,7 @@ class nrm_oscars_connection(object):
             if (thisToken is None):
                 raise Exception('OSCARS: HELD Cannot get Token : {}'.format(groupid))
         myheaders = {'authentication': thisToken} 
-        #if (nrm_config["debug"]>7): print "OSCARS: HELD_headers: ", myheaders
+        #if (nrm_config["debug"]>7): utils.nprint("OSCARS: HELD_headers: ", myheaders)
 
         if (connid is None) or (deltaid is None):
             raise Exception('OSCARS: Cannot HELD. Conn ID and/or Delta ID is empty.')
@@ -992,29 +993,29 @@ class nrm_oscars_connection(object):
         myutime1 = get_unixtime_from_deltatime(starttime)
         myutime2 = get_unixtime_from_deltatime(endtime)
         if (nrm_config["debug"]>2): 
-            print "OSCARS: HELD deltaid=", deltaid
-            print "OSCARS: HELD connid=", connid
-            print "OSCARS: HELD begin,end=", myutime1, ", ", myutime2
-            print "OSCARS: HELD URL=", self._surl('/protected/held/{:s}'.format(connid))
+            utils.nprint("OSCARS: HELD deltaid=", deltaid)
+            utils.nprint("OSCARS: HELD connid=", connid)
+            utils.nprint("OSCARS: HELD begin,end=", myutime1, ", ", myutime2)
+            utils.nprint("OSCARS: HELD URL=", self._surl('/protected/held/{:s}'.format(connid)))
 
-        if (nrm_config["debug"]>7): print "PCE came along: ", len(mypce)
+        if (nrm_config["debug"]>7): utils.nprint("PCE came along: ", len(mypce))
         if (nrm_config["debug"]>5):
             for j in mypce:
-                #print "OSCARS: HELD UUID: ", j.id
-                #print "OSCARS: HELD ConnID: ", j.held_id
-                #print "OSCARS: HELD junction_a: ", j.junction_a
-                #print "OSCARS: HELD junction_b: ", j.junction_b
-                #print "\t\"cost\" : " + str(j.cost) + ","
-                #print "\t\"azEro\" : ", j.azEro, ","
-                #print "\t\"zaEro\" : ", j.zaEro, ","
-                #print "\t\"azAvailable\" : " + str(j.azAvailable) + ","
-                #print "\t\"zaAvailable\" : ", str(j.zaAvailable), ","
-                #print "\t\"azBaseline\" : ", str(j.azBaseline), ","
-                #print "\t\"zaBaseline\" : ", str(j.zaBaseline)
+                #utils.nprint("OSCARS: HELD UUID: ", j.id)
+                #utils.nprint("OSCARS: HELD ConnID: ", j.held_id)
+                #utils.nprint("OSCARS: HELD junction_a: ", j.junction_a)
+                #utils.nprint("OSCARS: HELD junction_b: ", j.junction_b)
+                #utils.nprint("\t\"cost\" : " + str(j.cost) + ",")
+                #utils.nprint("\t\"azEro\" : ", j.azEro, ",")
+                #utils.nprint("\t\"zaEro\" : ", j.zaEro, ",")
+                #utils.nprint("\t\"azAvailable\" : " + str(j.azAvailable) + ",")
+                #utils.nprint("\t\"zaAvailable\" : ", str(j.zaAvailable), ",")
+                #utils.nprint("\t\"azBaseline\" : ", str(j.azBaseline), ",")
+                #utils.nprint("\t\"zaBaseline\" : ", str(j.zaBaseline)
                 j.indented_show()
         
         jlist = []
-        for k in swdict.keys():
+        for k in list(swdict.keys()):   # OLD: for k in swdict.keys():
             mysw=swdict[k]
             jlist.append(k)
             mysw.reservedbw
@@ -1023,9 +1024,9 @@ class nrm_oscars_connection(object):
             for a in flist:
                 ja = a.id.split(':')[0]
                 if (devicename == ja):
-                    if (nrm_config["debug"]>7): print "OSCARS: HELD devicename_found=", a.port_urn
+                    if (nrm_config["debug"]>7): utils.nprint("OSCARS: HELD devicename_found=", a.port_urn)
                     return (int) (swdict[a.port_urn+":"+str(a.vlan_id)].reservedbw / 1000000)
-            if (nrm_config["debug"]>7): print "OSCARS: HELD devicename_not_found=", devicename   # it should not be here
+            if (nrm_config["debug"]>7): utils.nprint("OSCARS: HELD devicename_not_found=", devicename)   # it should not be here
             return -1
 
         azbw = 0
@@ -1033,8 +1034,8 @@ class nrm_oscars_connection(object):
         mypipe='['
         for j in mypce:
             if (nrm_config["debug"]>9):
-                print "OSCARS: HELD azEro: ", j.azEro
-                print "OSCARS: HELD zaEro: ", j.zaEro
+                utils.nprint("OSCARS: HELD azEro: ", j.azEro)
+                utils.nprint("OSCARS: HELD zaEro: ", j.zaEro)
             azbw = get_bandwidth(j.junction_a)
             zabw = get_bandwidth(j.junction_b)
             mypipe = mypipe + '{ \
@@ -1055,13 +1056,13 @@ class nrm_oscars_connection(object):
         mypipe = mypipe + ']'
 
         if (nrm_config["debug"]>5): 
-            print "OSCARS: HELD MYPIPE=", mypipe
-            print "OSCARS: HELD Junctions=", jlist
+            utils.nprint("OSCARS: HELD MYPIPE=", mypipe)
+            utils.nprint("OSCARS: HELD Junctions=", jlist)
         tjlist=[]
         myjuncs='['
         for a in jlist:
             ja = a.split(':')[0]
-            if (nrm_config["debug"]>9): print "OSCARS: HELD junction = ", a, ", ", ja
+            if (nrm_config["debug"]>9): utils.nprint("OSCARS: HELD junction = ", a, ", ", ja)
             if not (ja in tjlist):
                 tjlist.append(ja)
                 if jlist.index(a) == 0:
@@ -1076,11 +1077,11 @@ class nrm_oscars_connection(object):
         each junction can have 0..N fixtures.
         A fixture has a junction field but it's single-valued
         '''
-        if (nrm_config["debug"]>5): print "Fixtures=", flist
+        if (nrm_config["debug"]>5): utils.nprint("Fixtures=", flist)
         myfix='['
         for a in flist:
             ja = a.id.split(':')[0]
-            if (nrm_config["debug"]>9): print "OSCARS: HELD junction = ", a, ", ", ja
+            if (nrm_config["debug"]>9): utils.nprint("OSCARS: HELD junction = ", a, ", ", ja)
             myfix=myfix+'{ "junction": "' + ja + '", \
                   "port": "' + a.port_urn + '", \
                   "vlan": ' + str(a.vlan_id) + ', \
@@ -1090,7 +1091,7 @@ class nrm_oscars_connection(object):
             if flist.index(a) != len(flist)-1:
                 myfix = myfix + ','
         myfix = myfix + ']'
-        if (nrm_config["debug"]>7): print "OSCARS: HELD Fixtures=", myfix
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: HELD Fixtures=", myfix)
         
         from collections import OrderedDict
         jsontext='{ \
@@ -1106,13 +1107,13 @@ class nrm_oscars_connection(object):
             
         jsonobj=json.loads(jsontext, object_pairs_hook=OrderedDict)
         if (nrm_config["debug"]>6):
-            print "############################"
-            print jsontext
-            print "############################"
-            print "HELD INPUT"
-            print json.dumps(jsonobj, indent=4)
+            utils.nprint("############################")
+            utils.nprint(jsontext)
+            utils.nprint("############################")
+            utils.nprint("HELD INPUT")
+            print(json.dumps(jsonobj, indent=4))
         
-        if (nrm_config["debug"]>7): print "OSCARS: HELD"
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: HELD")
         req = requests.Request('POST', self._surl('/protected/hold'), headers=myheaders, json=jsonobj)
 
         prepared = req.prepare()
@@ -1121,7 +1122,7 @@ class nrm_oscars_connection(object):
             print('{}\n{}\n{}\n\n{}'.format(
                 '-----------START-----------',
                 req.method + ' ' + req.url,
-                '\n'.join('{}: {}'.format(k, v) for k, v in req.headers.items()),
+                '\n'.join('{}: {}'.format(k, v) for k, v in list(req.headers.items())),
                 req.body,
                 '-----------END-----------',
             ))
@@ -1130,11 +1131,11 @@ class nrm_oscars_connection(object):
         s = requests.Session()
         resp = s.send(prepared, verify=False)
         # response is when your hold expires before that you will need to do a commit
-        if (nrm_config["debug"]>7): print "OSCARS: HELD DONE: ", resp.status_code
+        if (nrm_config["debug"]>7): utils.nprint("OSCARS: HELD DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): print "OSCARS: HELD FAILED: ", resp._content
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD FAILED: ", resp._content)
             raise Exception('OSCARS Cannot HELD: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): print "OSCARS: HELD: ", resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD: ", resp._content)
 
         return resp
         

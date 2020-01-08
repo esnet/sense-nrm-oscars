@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -32,6 +32,8 @@ from wsgiref.handlers import format_date_time
 from time import mktime
 import dateutil.parser
 import rdflib
+
+import sensenrm_utils as utils
 import sensenrm_oscars
 import sensenrm_db
 import sensenrm_cancel
@@ -166,10 +168,10 @@ class nrmDelta(object):
                 months = mytime1.month + amonth
             hours = delay_hours - 24*(int(delay_hours/24))
             if (nrm_config["debug"]>7):
-                print "DELTA: DELAYED time=", mytime1.hour
-                print "DELTA: DELAYED input=", delay_hours
-                print "DELTA: DELAYED days=", days
-                print "DELTA: DELAYED hours=", hours
+                utils.nprint("DELTA: DELAYED time=", mytime1.hour)
+                utils.nprint("DELTA: DELAYED input=", delay_hours)
+                utils.nprint("DELTA: DELAYED days=", days)
+                utils.nprint("DELTA: DELAYED hours=", hours)
             mytime1=datetime(mytime1.year+year, months, days, mytime1.hour+hours, mytime1.minute, mytime1.second, tzinfo=self.utc)
         return mytime1
 
@@ -182,7 +184,7 @@ class nrmDelta(object):
             mytime1=datetime(mytime1.year, mytime1.month, mytime1.day, mytime1.hour, mytime1.minute+3, mytime1.second, tzinfo=self.utc)
 
         if (nrm_config["debug"]>7):
-            print "DELTA: DELAYED 3 min time=", mytime1
+            utils.nprint("DELTA: DELAYED 3 min time=", mytime1)
         return mytime1
 
     def get_unixtime(self, delay_days):
@@ -207,7 +209,7 @@ class nrmDelta(object):
         return fmt_datetime + fmt_timezone
 
     def convert_str_to_datetime(self, mystr):
-        if (nrm_config["debug"]>6): print "DELTA: convert_time: ", mystr
+        if (nrm_config["debug"]>6): utils.nprint("DELTA: convert_time: ", mystr)
         date_with_tz = mystr
         date_str, tz = date_with_tz[:-5], date_with_tz[-5:]
         dt_utc = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f")
@@ -231,25 +233,25 @@ class nrmDelta(object):
             delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == nrm_deltaid).first()
             mydid = nrm_deltaid
             if delta is None:
-                if (nrm_config["debug"]>2): print "DELTA: STATUS_ID_NOT_FOUND=", nrm_deltaid
+                if (nrm_config["debug"]>2): utils.nprint("DELTA: STATUS_ID_NOT_FOUND=", nrm_deltaid)
                 delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.altid == nrm_deltaid).first()
                 if delta is None:
-                    if (nrm_config["debug"]>2): print "DELTA: STATUS_ALTID_NOT_FOUND=", nrm_deltaid
+                    if (nrm_config["debug"]>2): utils.nprint("DELTA: STATUS_ALTID_NOT_FOUND=", nrm_deltaid)
                     active_delta_status = sensenrm_db.is_delta_active(s, nrm_deltaid, False)
                     if not active_delta_status:
-                        if (nrm_config["debug"]>2): print "DELTA: STATUS_ID:"+nrm_deltaid+":NOT_ATIVE"
+                        if (nrm_config["debug"]>2): utils.nprint("DELTA: STATUS_ID:"+nrm_deltaid+":NOT_ATIVE")
                         idelta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.id == nrm_deltaid).first()
                         if idelta is None:
-                            if (nrm_config["debug"]>2): print "DELTA: iSTATUS_ID_NOT_FOUND=", nrm_deltaid
+                            if (nrm_config["debug"]>2): utils.nprint("DELTA: iSTATUS_ID_NOT_FOUND=", nrm_deltaid)
                             idelta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.altid == nrm_deltaid).first()
                             if idelta is None:
-                                if (nrm_config["debug"]>2): print "DELTA: iSTATUS_ALTID_NOT_FOUND=", nrm_deltaid
+                                if (nrm_config["debug"]>2): utils.nprint("DELTA: iSTATUS_ALTID_NOT_FOUND=", nrm_deltaid)
                                 idelta = s.query(sensenrm_db.oiDelta).filter(sensenrm_db.oiDelta.cancelid == nrm_deltaid).first()
                                 if idelta is None:
-                                    if (nrm_config["debug"]>2): print "DELTA: iSTATUS_CANCELID_NOT_FOUND=", nrm_deltaid
+                                    if (nrm_config["debug"]>2): utils.nprint("DELTA: iSTATUS_CANCELID_NOT_FOUND=", nrm_deltaid)
                                     phase = "ERROR_DELTAID_NOT_FOUND"
                                     return 201, phase
-                                if (nrm_config["debug"]>2): print "DELTA: iSTATUS_CANCELID_FOUND=", nrm_deltaid
+                                if (nrm_config["debug"]>2): utils.nprint("DELTA: iSTATUS_CANCELID_FOUND=", nrm_deltaid)
                                 phase = "COMMITTED" # instead of idelta.status
                                 return 200, phase
                             else:
@@ -262,31 +264,31 @@ class nrmDelta(object):
                     phase = "ERROR_DELTAID_NOT_FOUND"
                     return 201, phase
                 else:
-                    if (nrm_config["debug"]>2): print "DELTA: STATUS_ALTID_FOUND=", delta.altid
+                    if (nrm_config["debug"]>2): utils.nprint("DELTA: STATUS_ALTID_FOUND=", delta.altid)
                     mydid = delta.id
             if (nrm_config["debug"]>2):
-                print "DELTA: STATUS_DELTA_ID=", nrm_deltaid, "=", mydid
-                print "DELTA: STATUS_HELD_ID=", delta.heldid
-                print "DELTA: STATUS_DELTA_USERID=", delta.userid
-                print "DELTA: STATUS_DELTA_STATUS=", delta.status
+                utils.nprint("DELTA: STATUS_DELTA_ID=", nrm_deltaid, "=", mydid)
+                utils.nprint("DELTA: STATUS_HELD_ID=", delta.heldid)
+                utils.nprint("DELTA: STATUS_DELTA_USERID=", delta.userid)
+                utils.nprint("DELTA: STATUS_DELTA_STATUS=", delta.status)
 
             if (delta.userid == uid) or (sensenrm_db.is_admin(s,uid)):
                 try:
                     resp = oscars_conn.get_status(delta.heldid)
                 except Exception as e:
-                    if (nrm_config["debug"]>0): print "DELTA STATUS EXCEPT: ", e
+                    if (nrm_config["debug"]>0): utils.nprint("DELTA STATUS EXCEPT: ", e)
                     return 600, "DELTA_STATUS_QUERY_ERROR"
                 if resp.status_code != 200:
                     if (nrm_config["debug"]>2):
-                        print "DELTA: STATUS_FAILED=", resp.status_code
+                        utils.nprint("DELTA: STATUS_FAILED=", resp.status_code)
                 else:
                     if (nrm_config["debug"]>2):
-                        print "DELTA: STATUS_STATUS=", resp.status_code
+                        utils.nprint("DELTA: STATUS_STATUS=", resp.status_code)
                     jstr = resp.json()
                     for key in jstr:
                         if (key == "phase"):
                             if (nrm_config["debug"]>2):
-                                print "DELTA: STATUS_PHASE=", jstr[key]
+                                utils.nprint("DELTA: STATUS_PHASE=", jstr[key])
                             if jstr[key] == "RESERVED":
                                 phase = "COMMITTED"
                                 return resp.status_code, phase
@@ -297,7 +299,7 @@ class nrmDelta(object):
                                 return resp.status_code, jstr[key]
             else:
                 if (nrm_config["debug"]>2):
-                    print "DELTA: STATUS_UNAUTHORIZED_USER: ", uid
+                    utils.nprint("DELTA: STATUS_UNAUTHORIZED_USER: ", uid)
                 status = 403
                 phase = "UNAUTHORIZED_USER:" + str(uid)
                 return status, phase
@@ -305,22 +307,22 @@ class nrmDelta(object):
         return resp.status_code, phase
 
     def processDeltaReduction(self, deltaContent):
-        print "DELTA: Reduction Processing"
+        utils.nprint("DELTA: Reduction Processing")
         cancelID = ""
         gr = None
         gr = rdflib.Graph()
         result = gr.parse(data=deltaContent, format='ttl')
-        if (nrm_config["debug"]>7): print "DELTA: REDUC_LENGTH=", len(gr)
+        if (nrm_config["debug"]>7): utils.nprint("DELTA: REDUC_LENGTH=", len(gr))
         for subject,predicate,obj in gr:
             #if "urn:ogf:network:es.net:2013::" in str(subject):
             urnsearch = nrm_config["urnprefix"]+"::"
             if urnsearch in str(subject):
-                if (nrm_config["debug"]>6): print "DELTA: Cancellation_Subject=", subject
+                if (nrm_config["debug"]>6): utils.nprint("DELTA: Cancellation_Subject=", subject)
                 if "existsDuring" in str(subject):
                     subj2 = subject.split("conn+")
                     subj3 = subj2[1].split(":")
                     cancelID = subj3[0]
-                    if (nrm_config["debug"]>4): print "DELTA: Cancellation ID=", cancelID
+                    if (nrm_config["debug"]>4): utils.nprint("DELTA: Cancellation ID=", cancelID)
                     return cancelID
         return cancelID
 
@@ -330,8 +332,8 @@ class nrmDelta(object):
         timed_file = datetime.fromtimestamp(time.mktime(datetime.now().timetuple())).strftime('%Y%m%d-%H%M%S')
         output_file = self.basePath+"/delta_" + str(timed_file) + "_" + str(nrmargs['id']) + ".txt"
         if (nrm_config["debug"]>2):
-            print "DELTA: OUTPUT_PATH=", output_file 
-            print "DELTA: UID=", udn
+            utils.nprint("DELTA: OUTPUT_PATH=", output_file) 
+            utils.nprint("DELTA: UID=", udn)
         fo = open(output_file, 'w')
         outputcontent = '[{\"id\":\"' + str(nrmargs['id']) + '\",\"lastModified\":\"' + nrmargs['lastModified'] + '\",\"modelId\":\"' + nrmargs['modelId'] + '\",\"reduction\":' + nrmargs['reduction'] + ',\"addition\":\"' + nrmargs['addition']+ '}]'
         fo.write(outputcontent)
@@ -347,34 +349,34 @@ class nrmDelta(object):
             cancelid = self.processDeltaReduction(deltacontent)
             if cancelid == "":
                 deltacontent = nrmargs['addition']
-                print "Create_DeltaID=", nrmargs['id']
+                utils.nprint("Create_DeltaID=", nrmargs['id'])
             else:
-                print "Termination_DeltaID=", cancelid
+                utils.nprint("Termination_DeltaID=", cancelid)
                 reductionFlag = True
         
         if (nrm_config["debug"]>2):
-            print "DELTA: ID=", nrmargs['id']
-            print "DELTA: MODEL_ID=", nrmargs['modelId']
+            utils.nprint("DELTA: ID=", nrmargs['id'])
+            utils.nprint("DELTA: MODEL_ID=", nrmargs['modelId'])
         if (nrm_config["debug"]>8):
-            print "DELTA: CONTENT=", deltacontent
+            utils.nprint("DELTA: CONTENT=", deltacontent)
 
         if reductionFlag: # Reduction/cancel
             heldid = ""
             res_msg = ""
             if cancelid == "":
-                if (nrm_config["debug"]>6): print "DELTA: Cancel_DeltaID is NONE"
+                if (nrm_config["debug"]>6): utils.nprint("DELTA: Cancel_DeltaID is NONE")
             else:
-                if (nrm_config["debug"]>2): print "DELTA: Cancel_DeltaID=", cancelid
+                if (nrm_config["debug"]>2): utils.nprint("DELTA: Cancel_DeltaID=", cancelid)
                 with mydb_session() as s:            
                     founddelta=False
                     active_delta_status = sensenrm_db.is_delta_active(s, cancelid, False)
                     
                     delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == cancelid).first()
                     if delta is None:
-                        if (nrm_config["debug"]>6): print "DELTA: ID_NOT_FOUND=", cancelid
+                        if (nrm_config["debug"]>6): utils.nprint("DELTA: ID_NOT_FOUND=", cancelid)
                         delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.altid == cancelid).first()
                         if delta is None:
-                            if (nrm_config["debug"]>6): print "DELTA: ALTID_NOT_FOUND=", cancelid
+                            if (nrm_config["debug"]>6): utils.nprint("DELTA: ALTID_NOT_FOUND=", cancelid)
                         else:
                             founddelta=True
                     else:
@@ -384,20 +386,20 @@ class nrmDelta(object):
                         heldid = delta.heldid
                         cancelid = delta.id
                         if (nrm_config["debug"]>2):
-                            print "DELTA: CANCEL_DELTA_ID=", cancelid, "=", delta.id
-                            print "DELTA: CANCEL_DELTA_ALTID=", cancelid, "=", delta.altid
-                            print "DELTA: CANCEL_HELD_ID=", delta.heldid
+                            utils.nprint("DELTA: CANCEL_DELTA_ID=", cancelid, "=", delta.id)
+                            utils.nprint("DELTA: CANCEL_DELTA_ALTID=", cancelid, "=", delta.altid)
+                            utils.nprint("DELTA: CANCEL_HELD_ID=", delta.heldid)
                 
                         status, resp = nrmcancel.cancel(cancelid, uid, str(nrmargs['id']))
                         if status == 200:
-                            if (nrm_config["debug"]>2): print "DELTA: CANCELLED"
+                            if (nrm_config["debug"]>2): utils.nprint("DELTA: CANCELLED")
                             res_msg = str(resp)
                         elif status == 400:
                             status = 200
                             res_msg = "DeltaID:"+cancelid+":CANCELLED"
-                            if (nrm_config["debug"]>2): print "DELTA: CANCELLED_with_400:", status
+                            if (nrm_config["debug"]>2): utils.nprint("DELTA: CANCELLED_with_400:", status)
                         else:
-                            if (nrm_config["debug"]>2): print "DELTA: CANCEL_FAILED:", status
+                            if (nrm_config["debug"]>2): utils.nprint("DELTA: CANCEL_FAILED:", status)
                         with mydb_session() as s:
                             sensenrm_db.update_sys_value(s, "model_changed", 1)
                     else:
@@ -427,37 +429,37 @@ class nrmDelta(object):
             gac = None
             gac = rdflib.Graph()
             result = gac.parse(data=deltacontent, format='ttl')
-            if (nrm_config["debug"]>7): print "DELTA: LENGTH=", len(gac)
+            if (nrm_config["debug"]>7): utils.nprint("DELTA: LENGTH=", len(gac))
             for subject,predicate,obj in gac:
                 #if "urn:ogf:network:es.net:2013::" in str(subject):
                 urnsearch = nrm_config["urnprefix"]+"::"
                 if urnsearch in str(subject):
                     if "service+bw" in str(subject):
-                        if (nrm_config["debug"]>9): print "DELTA: SUBJECT:", subject
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: SUBJECT:", subject)
                         subj2 = subject.split("::")
-                        if (nrm_config["debug"]>9): print "DELTA: SUBJECT2:", subj2
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: SUBJECT2:", subj2)
                         subj3 = subj2[1].split(":")
-                        if (nrm_config["debug"]>9): print "DELTA: SUBJECT3:", subj3
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: SUBJECT3:", subj3)
 
                         junction = subj3[0]+":"+subj3[1].replace('_', '/')
-                        if (nrm_config["debug"]>9): print "DELTA: JUNC:", junction
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: JUNC:", junction)
                         tvport = int(subj3[3].split("+")[1])
-                        if (nrm_config["debug"]>9): print "DELTA: TVPORT:", tvport
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: TVPORT:", tvport)
                         djunction = junction + ":" + str(tvport)
-                        if (nrm_config["debug"]>9): print "DELTA: DJUNC:", djunction
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: DJUNC:", djunction)
                     
                         if "reservableCapacity" in str(predicate):
                             if (nrm_config["debug"]>6):
-                                print "DELTA: JUNCTION=", junction
-                                print "DELTA: reservation=", obj
-                                print "DELTA: VLANPORT=", tvport
+                                utils.nprint("DELTA: JUNCTION=", junction)
+                                utils.nprint("DELTA: reservation=", obj)
+                                utils.nprint("DELTA: VLANPORT=", tvport)
                             if djunction in dict_switches :
                                 dict_switches[djunction].reservedbw = int(obj) #bps
                             else:
                                 dsw = delta_switch(sid=djunction, did=nrmargs['id'], mid=nrmargs['modelId'], bw=int(obj), vport=tvport)
                                 dict_switches[djunction] = dsw
                                 if (nrm_config["debug"]>7):
-                                    print "DELTA: ADD_SWITCH_LIST=", djunction
+                                    utils.nprint("DELTA: ADD_SWITCH_LIST=", djunction)
                                 if not (junction in list_junctions):
                                     list_junctions.append(junction)
                                 if len(list_switches) > 0:
@@ -468,8 +470,8 @@ class nrmDelta(object):
                         
                         elif "unit" in str(predicate):
                             if (nrm_config["debug"]>7):
-                                print "DELTA: JUNCTION=", djunction
-                                print "DELTA: unit=", obj
+                                utils.nprint("DELTA: JUNCTION=", djunction)
+                                utils.nprint("DELTA: unit=", obj)
 
                     elif "vlanport" in str(subject) or "vlantag" in str(subject):
                         subj2 = subject.split("::")
@@ -477,9 +479,9 @@ class nrmDelta(object):
                         junction = subj3[0]+":"+subj3[1].replace('_', '/')
                         if "value" in str(predicate):
                             if (nrm_config["debug"]>6):
-                                print "DELTA: SUBJECT=", subject
-                                print "DELTA: JUNCTION=", junction
-                                print "DELTA: VLANPORT=", obj
+                                utils.nprint("DELTA: SUBJECT=", subject)
+                                utils.nprint("DELTA: JUNCTION=", junction)
+                                utils.nprint("DELTA: VLANPORT=", obj)
                             djunction = junction + ":" + str(obj)
                             if djunction in dict_switches :
                                 dict_switches[djunction].vlanport = int(obj) #bps
@@ -487,7 +489,7 @@ class nrmDelta(object):
                                 dsw = delta_switch(sid=djunction, did=nrmargs['id'], mid=nrmargs['modelId'], bw=0, vport=int(obj))
                                 dict_switches[djunction] = dsw
                                 if (nrm_config["debug"]>7):
-                                    print "DELTA: ADD_SWITCH_LIST=", djunction
+                                    utils.nprint("DELTA: ADD_SWITCH_LIST=", djunction)
                                 if not (junction in list_junctions):
                                     list_junctions.append(junction)
                                 if len(list_switches) > 0:
@@ -498,22 +500,22 @@ class nrmDelta(object):
 
                     elif "lifetime" in str(subject):
                         if "start" in str(predicate):
-                            if (nrm_config["debug"]>4): print "DELTA: LIFETIME_START=", obj
+                            if (nrm_config["debug"]>4): utils.nprint("DELTA: LIFETIME_START=", obj)
                             starttime=obj
                         if "end" in str(predicate):
-                            if (nrm_config["debug"]>4): print "DELTA: LIFETIME_END=", obj
+                            if (nrm_config["debug"]>4): utils.nprint("DELTA: LIFETIME_END=", obj)
                             endtime=obj
                     elif "ServiceDomain:EVTS.A-GOLE:conn+" in str(subject):
-                        if (nrm_config["debug"]>9): print "DELTA: CONN_SUBJ:", subject
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_SUBJ:", subject)
                         subj2 = subject.split("::")
-                        if (nrm_config["debug"]>9): print "DELTA: CONN_SUBJ2:", subj2
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_SUBJ2:", subj2)
                         subj3 = subj2[1].split(":")
-                        if (nrm_config["debug"]>9): print "DELTA: CONN_SUBJ3:", subj3
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_SUBJ3:", subj3)
                         delta_connp = subj3[2].split("+")[1]
-                        if (nrm_config["debug"]>9): print "DELTA: CONN_ID+:", delta_connp
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_ID+:", delta_connp)
 
                         d_urs = subj3[3]
-                        if (nrm_config["debug"]>9): print "DELTA: CONN_URI_STRING:", d_urs
+                        if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_URI_STRING:", d_urs)
                         if not (d_urs in list_urs):
                             list_urs.append(d_urs)
                             if len(delta_urs) > 0:
@@ -522,7 +524,7 @@ class nrmDelta(object):
                                 delta_urs=d_urs
 
                         d_avlan = subj3[4].split("+")[1]
-                        if (nrm_config["debug"]>6): print "DELTA: CONN_ID+VLAN:", d_avlan
+                        if (nrm_config["debug"]>6): utils.nprint("DELTA: CONN_ID+VLAN:", d_avlan)
                         if not (d_avlan in list_avlans):
                             list_avlans.append(d_avlan)
                             if len(delta_avlan) > 0:
@@ -534,10 +536,10 @@ class nrmDelta(object):
                 raise Exception('DELTA: ADDITION: NO SWITCHES FOUND.')
             if (len(starttime) == 0):
                 starttime = str(self.time_iso8601(self.get_delayed_time_5min()))
-                if (nrm_config["debug"]>3): print "DELTA: STARTTIME=", starttime
+                if (nrm_config["debug"]>3): utils.nprint("DELTA: STARTTIME=", starttime)
             if (len(endtime) == 0):
                 endtime = str(self.time_iso8601(self.get_delayed_time(int(nrm_service["default_delta_lifetime"]))))
-                if (nrm_config["debug"]>3): print "DELTA: ENDTIME=", endtime
+                if (nrm_config["debug"]>3): utils.nprint("DELTA: ENDTIME=", endtime)
 
             dt_s = self.convert_str_to_datetime(starttime)
             dt_e = self.convert_str_to_datetime(endtime)
@@ -547,11 +549,11 @@ class nrmDelta(object):
         
             with mydb_session() as s:
                 groupid = sensenrm_db.get_user_group(s,uid)
-                if (nrm_config["debug"]>3): print "DELTA: ### Get_Connection_ID ###"
+                if (nrm_config["debug"]>3): utils.nprint("DELTA: ### Get_Connection_ID ###")
                 try:
                     connid = oscars_conn.get_conn_id(groupid)
                 except Exception as e:
-                    if (nrm_config["debug"]>0): print "DELTA: Get_Conn_ID EXCEPT: ", e
+                    if (nrm_config["debug"]>0): utils.nprint("DELTA: Get_Conn_ID EXCEPT: ", e)
                     raise 
 
                 if len(delta_connp) > 0:
@@ -567,15 +569,15 @@ class nrmDelta(object):
             # P2P and Multipoint
             mypce=[]
             if (nrm_config["debug"]>3): 
-                print "DELTA: ### Getting_PCE ###"
-                print "DELTA: num_list_switches=", len(list_switches)
-                print "DELTA: list_switches=", list_switches
-                print "DELTA: list_junctions=", list_junctions
+                utils.nprint("DELTA: ### Getting_PCE ###")
+                utils.nprint("DELTA: num_list_switches=", len(list_switches))
+                utils.nprint("DELTA: list_switches=", list_switches)
+                utils.nprint("DELTA: list_junctions=", list_junctions)
             if (len(list_junctions) > 1) :
                 try:
                     mypce = oscars_conn.get_pcelist(connid, nrmargs['id'], list_switches, starttime, endtime)
                 except Exception as e:
-                    if (nrm_config["debug"]>0): print "DELTA: PCE EXCEPT: ", e
+                    if (nrm_config["debug"]>0): utils.nprint("DELTA: PCE EXCEPT: ", e)
                     with mydb_session() as s:
                         sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", str(e))
                         sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
@@ -583,7 +585,7 @@ class nrmDelta(object):
 
             myfix=[]
             for a in list_switches:
-                if (nrm_config["debug"]>4): print "DELTA: junction=", a, " / ", a.split(':')[0], " / vlanId=", dict_switches[a].vlanport, " / bw=", dict_switches[a].reservedbw
+                if (nrm_config["debug"]>4): utils.nprint("DELTA: junction=", a, " / ", a.split(':')[0], " / vlanId=", dict_switches[a].vlanport, " / bw=", dict_switches[a].reservedbw)
                 pt = dict_switches[a].vlanport
                 rbw=(int) (dict_switches[a].reservedbw / 1000000.0)
                 tn = a.split(':')
@@ -591,20 +593,20 @@ class nrmDelta(object):
                 nfix = sensenrm_oscars.nrm_fixture(tn[0], rbw, rbw, tpurn, pt)
                 myfix.append(nfix)
 
-            if (nrm_config["debug"]>3): print "DELTA: ### HELD ####"
+            if (nrm_config["debug"]>3): utils.nprint("DELTA: ### HELD ####")
             try:
                 resp = oscars_conn.get_conn_held(connid, nrmargs['id'], dict_switches, mypce, myfix, starttime, endtime, groupid)
             except Exception as e:
-                if (nrm_config["debug"]>0): print "DELTA: HELD EXCEPT: ", e
+                if (nrm_config["debug"]>0): utils.nprint("DELTA: HELD EXCEPT: ", e)
                 with mydb_session() as s:
                     sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", str(e))
                     sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
                 raise
         
             if (resp.status_code == 200):
-                if (nrm_config["debug"]>4): print "DELTA: HELD_OK_CONTENT=", resp._content
+                if (nrm_config["debug"]>4): utils.nprint("DELTA: HELD_OK_CONTENT=", resp._content)
                 with mydb_session() as s:
-                    for k in dict_switches.keys():
+                    for k in list(dict_switches.keys()): # OLD: for k in dict_switches.keys()
                         mysw=dict_switches[k]
                         sensenrm_db.insert_switch(s, mysw.deltaid, mysw.id, mysw.vlanport, mysw.reservedbw, starttime, endtime, connid)
                     sensenrm_db.insert_junction_bidports(s, nrmargs['id'], list_switches)
@@ -613,8 +615,8 @@ class nrmDelta(object):
                 return [{"id":str(nrmargs['id']),"description":str("oscars:"+connid),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content)}], resp.status_code
             else:
                 if (nrm_config["debug"]>3): 
-                    print "DELTA: HELD_FAILED_CONTENT=", resp.status_code
-                    print "DELTA: HELD_FAILED_CONTENT=", resp._content
+                    utils.nprint("DELTA: HELD_FAILED_CONTENT=", resp.status_code)
+                    utils.nprint("DELTA: HELD_FAILED_CONTENT=", resp._content)
                 with mydb_session() as s:
                     sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", "HELD_FAILED")
                     sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 

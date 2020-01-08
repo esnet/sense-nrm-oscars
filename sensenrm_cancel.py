@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -33,6 +33,7 @@ import sys
 import os
 import fileinput
 
+import sensenrm_utils as utils
 import sensenrm_oscars
 import sensenrm_db
 import json
@@ -77,25 +78,25 @@ class nrmCancel(object):
         time_iso8601 = fmt_datetime + fmt_timezone
         return time_iso8601
     
-    def cancel(self, nrm_deltaid, uid, cid):
+    def cancel(self, nrm_deltaid, uid, cancelid):
         with mydb_session() as s:            
             delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == nrm_deltaid).first()
             if delta is None:
                 delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.altid == cancelid).first()
                 if delta is None:
                     resp = "CANCEL_DELTAID_NOTFOUND:" + str(nrm_deltaid)
-                    if (nrm_config["debug"]>0): print "CANCEL_DELTAID_NOTFOUND=", nrm_deltaid
+                    if (nrm_config["debug"]>0): utils.nprint("CANCEL_DELTAID_NOTFOUND=", nrm_deltaid)
             if (nrm_config["debug"]>0):
-                print "CANCEL_DELTA_ID=", nrm_deltaid, "=", delta.id
-                print "CANCEL_HELD_ID=", delta.heldid
-                print "CANCEL_DELTA_USERID=", delta.userid
+                utils.nprint("CANCEL_DELTA_ID=", nrm_deltaid, "=", delta.id)
+                utils.nprint("CANCEL_HELD_ID=", delta.heldid)
+                utils.nprint("CANCEL_DELTA_USERID=", delta.userid)
 
             if (delta.userid == uid) or (sensenrm_db.is_admin(s,uid)):
                 gid = sensenrm_db.get_user_group(s,uid)
                 try:
                     status, resp = oscars_conn.get_cancel(delta.heldid, gid)
                 except Exception as e:
-                    if (nrm_config["debug"]>0): print "CANCEL EXCEPT: ", e
+                    if (nrm_config["debug"]>0): utils.nprint("CANCEL EXCEPT: ", e)
                     status = 600
                     resp = "CANCEL_OSCARS_EXCEPTION: " + str(status)
                 did = delta.id
@@ -103,24 +104,24 @@ class nrmCancel(object):
                 if (status == 400) or (status == 404):
                     sensenrm_db.update_switch(s, did, 0)
                     sensenrm_db.remove_junction_bidports_with_delta(s, did)
-                    sensenrm_db.insert_idelta_remove_delta(s, did, True, cid)
+                    sensenrm_db.insert_idelta_remove_delta(s, did, True, cancelid)
                     if (nrm_config["debug"]>0): 
-                        print "Cannot_CANCEL_BUT_Cancelled_400_404: ", status
+                        utils.nprint("Cannot_CANCEL_BUT_Cancelled_400_404: ", status)
                 elif status != 200:
                     if (nrm_config["debug"]>0): 
-                        print "Cannot_CANCEL: ", status
+                        utils.nprint("Cannot_CANCEL: ", status)
                 else:
                     sensenrm_db.update_switch(s, did, 0)
                     sensenrm_db.remove_junction_bidports_with_delta(s, did)
-                    sensenrm_db.insert_idelta_remove_delta(s, did, True, cid)
+                    sensenrm_db.insert_idelta_remove_delta(s, did, True, cancelid)
                     if (nrm_config["debug"]>0): 
-                        print "CANCEL_STATUS=", status
-                        print "CANCEL_RESP=", resp
-                        print "CANCELALL_TIMEDELAY_60"
+                        utils.nprint("CANCEL_STATUS=", status)
+                        utils.nprint("CANCEL_RESP=", resp)
+                        utils.nprint("CANCELALL_TIMEDELAY_60")
                     time.sleep(60) # time delay 60 seconds for the OSCARS switch reset delay time issue, after "cancel" for committed vlans
             else:
                 if (nrm_config["debug"]>0):
-                    print "CANCEL_UNAUTHORIZED_USER: ", uid
+                    utils.nprint("CANCEL_UNAUTHORIZED_USER: ", uid)
                 resp = "UNAUTHORIZED_USER:" + str(uid)
                 status = 403
             return status, resp
@@ -142,13 +143,13 @@ class nrmCancel(object):
                 gid = sensenrm_db.get_user_group(s,uid)
                 for delta in alldeltas:
                     if (nrm_config["debug"]>0):
-                        print "CANCELALL_DELTA_ID=", delta.id
-                        print "CANCELALL_HELD_ID=", delta.heldid
+                        utils.nprint("CANCELALL_DELTA_ID=", delta.id)
+                        utils.nprint("CANCELALL_HELD_ID=", delta.heldid)
 
                     try:
                         status, resp = oscars_conn.get_cancel(delta.heldid, gid)
                     except Exception as e:
-                        if (nrm_config["debug"]>0): print "CANCEL EXCEPT: ", e
+                        if (nrm_config["debug"]>0): utils.nprint("CANCEL EXCEPT: ", e)
                         status = 600
 
                     did = delta.id
@@ -157,19 +158,19 @@ class nrmCancel(object):
                         sensenrm_db.remove_junction_bidports_with_delta(s, did)
                         sensenrm_db.insert_idelta_remove_delta(s, did, True, "")
                         if (nrm_config["debug"]>0):
-                            print "Cannot_CANCELALL_BUT_Cancelled_400: ", status
+                            utils.nprint("Cannot_CANCELALL_BUT_Cancelled_400: ", status)
                         result = result + "OK2"
                     elif status != 200:
                         if (nrm_config["debug"]>0):
-                            print "Cannot_CANCELALL: ", status
+                            utils.nprint("Cannot_CANCELALL: ", status)
                         result = result + "FAILED"
                     else:
                         sensenrm_db.update_switch(s, did, 0)
                         sensenrm_db.remove_junction_bidports_with_delta(s, did)
                         sensenrm_db.insert_idelta_remove_delta(s, did, True, "")
                         if (nrm_config["debug"]>0):
-                            print "CANCELALL_STATUS=", status
-                            print "CANCELALL_RESP=", resp
+                            utils.nprint("CANCELALL_STATUS=", status)
+                            utils.nprint("CANCELALL_RESP=", resp)
                         result = result + "OK"
                         mydelay = True
 
@@ -179,7 +180,7 @@ class nrmCancel(object):
                         result = result + ','
                 if (mydelay):
                     if (nrm_config["debug"]>0): 
-                        print "CANCELALL_TIMEDELAY_60"
+                        utils.nprint("CANCELALL_TIMEDELAY_60")
                     time.sleep(60)	#time delay (60 seconds) for the OSCARS switch reset delay time issue, after "cancel" for committed vlans
             else:
                 result = "CANCELALL_DELTAS_NOT_FOUND"

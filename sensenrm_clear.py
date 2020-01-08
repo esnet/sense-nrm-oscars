@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -29,6 +29,7 @@ import sys
 import os
 import fileinput
 
+import sensenrm_utils as utils
 import sensenrm_oscars
 import sensenrm_db
 import json
@@ -77,32 +78,32 @@ class nrmClear(object):
         with mydb_session() as s:            
             delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.id == nrm_deltaid).first()
             if delta is None:
-                if (nrm_config["debug"]>0): print "CLEAR_DELTAID_NOTFOUND=", nrm_deltaid
+                if (nrm_config["debug"]>0): utils.nprint("CLEAR_DELTAID_NOTFOUND=", nrm_deltaid)
                 return False
             if (nrm_config["debug"]>1):
-                print "CLEAR_DELTA_ID=", nrm_deltaid, "=", delta.id
-                print "CLEAR_HELD_ID=", delta.heldid
-                print "CLEAR_DELTA_USERID=", delta.userid
+                utils.nprint("CLEAR_DELTA_ID=", nrm_deltaid, "=", delta.id)
+                utils.nprint("CLEAR_HELD_ID=", delta.heldid)
+                utils.nprint("CLEAR_DELTA_USERID=", delta.userid)
             if (delta.userid == uid) or (sensenrm_db.is_admin(s,uid)):
                 groupid = sensenrm_db.get_user_group(s,uid)
                 try:
                     status, resp = oscars_conn.get_clear(delta.heldid, groupid)
                 except Exception as e:
-                    if (nrm_config["debug"]>0): print "CLEAR EXCEPT: ", e
+                    if (nrm_config["debug"]>0): utils.nprint("CLEAR EXCEPT: ", e)
                     status = 600
 
                 if status != 200:
                     if (nrm_config["debug"]>0):
-                        print "CLEAR_FAILED=", status
+                        utils.nprint("CLEAR_FAILED=", status)
                 else:
                     if (nrm_config["debug"]>0):
-                        print "CLEAR_STATUS=", status
-                        print "CLEAR_RESP=", resp
+                        utils.nprint("CLEAR_STATUS=", status)
+                        utils.nprint("CLEAR_RESP=", resp)
                     with mydb_session() as s:
                         sensenrm_db.update_sys_value(s, "model_changed", 1)
             else:
                 if (nrm_config["debug"]>0):
-                    print "CLEAR_UNAUTHORIZED_USER: ", uid
+                    utils.nprint("CLEAR_UNAUTHORIZED_USER: ", uid)
                 resp = "UNAUTHORIZED_USER:" + str(uid)
                 status = 403
 

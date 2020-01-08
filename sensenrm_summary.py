@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -28,6 +28,8 @@ import uuid
 import sys
 import os
 import fileinput
+
+import sensenrm_utils as utils
 from sensenrm_config import log_config, nrm_config
 
 class nrmSummary(object):
@@ -69,7 +71,7 @@ class nrmSummary(object):
     def getDelta(self, nrm_uuid):
         inputdelta = basePath+"/delta_" + nrm_uuid + ".txt"
         if not os.path.isfile(inputdelta):
-            if (nrm_config["debug"]>7): print "SUMM: no such delta input file: ", nrm_uuid, " in ", basePath
+            if (nrm_config["debug"]>7): utils.nprint("SUMM: no such delta input file: ", nrm_uuid, " in ", basePath)
             exit()
         fi = fileinput.FileInput(inputdelta)
         deltacontent = fi.readline()

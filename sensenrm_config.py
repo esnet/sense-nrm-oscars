@@ -1,5 +1,5 @@
 #
-# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2019,
+# SENSE Network Resource Manager (SENSE-NRM) Copyright (c) 2018-2020,
 # The Regents of the University of California, through Lawrence Berkeley
 # National Laboratory (subject to receipt of any required approvals from
 # the U.S. Dept. of Energy).  All rights reserved.
@@ -26,21 +26,21 @@
 # Current server host information
 nrm_config = {
     "host": "dev-sense-nrm.es.net",
-    "port": 8443,
-    "urnprefix": "urn:ogf:network:es.net:2019",
+    "port": 443,
+    "urnprefix": "urn:ogf:network:es.net:2013",
     "debug": 8  # debug level [0-9]
 }
 
 nrm_service = {
-    # "l3vpn_model_insert": "./nrm-l3vpn.txt", # Static L3VPN model insert path
+    "l3vpn_model_insert": "/home/asim/nrm/l3vpn-insert-191118-sc19-3.txt", # Static L3VPN model insert path
     "poll_duration": 60,  # minutes
-    "default_delta_lifetime": 24 # 72 hours
+    "default_delta_lifetime": 72 # 72 hours, 168 hours (7 days)
 }
 
 # Configurations for sqlalchemy
 nrmdb_config = {
     "type": "sqlite",
-    "url": "/home/asim/tbnrm/nrmtb.db"
+    "url": "/home/asim/nrm/nrmdb.db"
 }
 
 # OSCARS access information
@@ -61,27 +61,27 @@ nrmdb_config = {
 #}
 
 ## OSCARS production
-#oscars_config = {
-#    "url": "oscars-web.es.net:443",
-#    "default_user": "asim",
-#    "default_passwd": "sdmGr00p#1_2018",
-#    "default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTUzNjM0MzU0Mjk2MywiZXhwIjoyNDAwMzQzNTQyfQ.sIcuilaWg0rnZYmi5Hx7-x5B6XePbdna-YkArgEw3M-bX33HvSgcp9OdZOk7ImFXlg4zc9BQe9yBPSfA4yeJqA",
-#    "default_dn": "/DC=org/DC=opensciencegrid/O=Open Science Grid/OU=People/CN=Alex Sim 1116"
-#}
+oscars_config = {
+    "url": "oscars-web.es.net:443",
+    "default_user": "asim",
+    "default_passwd": "sdmGr00p#1_2018",
+    "default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTUzNjM0MzU0Mjk2MywiZXhwIjoyNDAwMzQzNTQyfQ.sIcuilaWg0rnZYmi5Hx7-x5B6XePbdna-YkArgEw3M-bX33HvSgcp9OdZOk7ImFXlg4zc9BQe9yBPSfA4yeJqA",
+    "default_dn": "/DC=org/DC=opensciencegrid/O=Open Science Grid/OU=People/CN=Alex Sim 1116"
+}
 
 ## OSCARS netlab
-oscars_config = {
-    "url": "oscars-dev2.es.net:443",
-    "default_user": "asim",
-    "default_passwd": "sdmGroup#1",
-    #"default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTUxNzUwNzU1MjU1MiwiZXhwIjoyMzgxNTA3NTUyfQ.h7zntsDFIzBQHG1PNlJNWbvpUw4WcAqbDdLR0N0-gdsbPdOpSG9Bk8WRMuVYwogd_DE4b49doU9A3XD3AB5dYg",
-    "default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTU1NTAwMjUzMDI3OCwiZXhwIjoyNDE5MDAyNTMwfQ.Eh3GwCeeVHaqazCLm5gRwmdXs2cOYemte0mNXzMrXbn6K5RuJdAVTDWa5wSmpZbwVfd5TW63qCdLMl-xLcWcTA",
-    "default_dn": "CN=Alex Sim 1116,OU=People,O=Open Science Grid,DC=opensciencegrid,DC=org"
-}
+#oscars_config = {
+#    "url": "oscars-dev2.es.net:443",
+#    "default_user": "asim",
+#    "default_passwd": "sdmGroup#1",
+#    #"default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTUxNzUwNzU1MjU1MiwiZXhwIjoyMzgxNTA3NTUyfQ.h7zntsDFIzBQHG1PNlJNWbvpUw4WcAqbDdLR0N0-gdsbPdOpSG9Bk8WRMuVYwogd_DE4b49doU9A3XD3AB5dYg",
+#    "default_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhc2ltIiwiY3JlYXRlZCI6MTU1NTAwMjUzMDI3OCwiZXhwIjoyNDE5MDAyNTMwfQ.Eh3GwCeeVHaqazCLm5gRwmdXs2cOYemte0mNXzMrXbn6K5RuJdAVTDWa5wSmpZbwVfd5TW63qCdLMl-xLcWcTA",
+#    "default_dn": "CN=Alex Sim 1116,OU=People,O=Open Science Grid,DC=opensciencegrid,DC=org"
+#}
 
 users_config = {
     "admin" : "CN=Alex Sim,O=ESnet,ST=CA,C=US",
-    "mapfile" : "/home/asim/tbnrm/nrm-mapfile"
+    "mapfile" : "/home/asim/nrm/nrm-mapfile"
          # mapfile format: DN group
          # e.g. "/DC=org/DC=opensciencegrid/O=Open Science Grid/OU=People/CN=Alex Sim 1116" default
 }
@@ -95,6 +95,6 @@ ssl_config = {
 }
 
 log_config = {
-    "basepath": "/home/asim/tbnrm/logs"
+    "basepath": "/home/asim/nrm/logs"
 }
 
