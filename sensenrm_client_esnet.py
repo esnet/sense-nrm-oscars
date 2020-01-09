@@ -73,14 +73,14 @@ import os
 import time
 import uuid
 import urllib3
-import httplib
+#import httplib
 import logging
 import json
 import sys
 import argparse
 import fileinput
 
-from urlparse import urlparse
+#from urlparse import urlparse
 
 import requests
 import ssl
@@ -348,7 +348,7 @@ def status_delta(statusid):
     if resp.status_code != 200:
         print('NRM summary non-successful response:')
         dump(resp.json())
-        raise Exception('Status Delta Error {}'.format(resp.status_code))
+        raise Exception('Status Delta Error')
     print('NRM summary result: {}'.format(resp.json()["state"]))
     myprint('NRM summary response:')
     print(json.dumps(resp.json(), indent = 4))
@@ -374,7 +374,7 @@ def cancel_delta(deltaid):
         print('NRM cancel non-successful response:')
         print(str(resp._content))
         #dump(resp.json())
-        raise Exception('/deltas/actions/cancel Error {}'.format(resp.status_code))
+        raise Exception('/deltas/actions/cancel Error')
     print('NRM cancel result: {}'.format(resp.json()["result"]))
     myprint('NRM cancel response:')
     print(json.dumps(resp.json(), indent = 4))

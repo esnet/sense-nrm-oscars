@@ -119,7 +119,7 @@ class oGroup(Base):
     dn = Column(String)
     code = Column(String)
 
-    def utils.nprintMe(self):
+    def printMe(self):
         if (nrm_config["debug"]>0): utils.nprint("id::[",self.id,"] login=[",self.login,"]");
 
 class connModes(enum.Enum):
@@ -454,7 +454,8 @@ def update_switch(s, did, flag):
     if mObjs is None:
         if (nrm_config["debug"]>6): utils.nprint("DB: NO Switches for DELTAID=", did)
     else:
-        if (nrm_config["debug"]>6): utils.nprint("DB: Switch exists=", end=' ') 
+        #if (nrm_config["debug"]>6): utils.nprint("DB: Switch exists=", end=' ') 
+        if (nrm_config["debug"]>6): utils.nprint("DB: Switch exists=") 
         for mObj in mObjs:
             mObj.active = flag
             s.add(mObj)
@@ -740,10 +741,10 @@ def get_user(s, uid):
     if (nrm_config["debug"]>6): utils.nprint("DB: Get_user: ", uid)
     mObj = s.query(oUser).filter(oUser.id == uid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
-		return mObj
+        if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
+        return mObj
     else:
-		return None
+        return None
 
 def is_admin(s, uid):
     if (nrm_config["debug"]>6): utils.nprint("DB: Is_admin: ", uid)
@@ -753,18 +754,18 @@ def is_admin(s, uid):
     else:
 		#if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
         if (mObj.role == "admin"):
-		    return True
+            return True
         else:
-		    return False
+            return False
 
 def get_user_group(s, uid):
     if (nrm_config["debug"]>6): utils.nprint("DB: Get_user_group: ", uid)
     mObj = s.query(oUser).filter(oUser.id == uid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
-		return mObj.group
+        if (nrm_config["debug"]>6): utils.nprint("DB: User found: ", mObj.id)
+        return mObj.group
     else:
-		return None
+        return None
 
 def insert_user(s, uid, group, role, active):
     mObj = s.query(oUser).filter(oUser.id == uid).first()
@@ -807,19 +808,19 @@ def get_group(s, gid):
     if (nrm_config["debug"]>6): utils.nprint("DB: Group query: ", gid)
     mObj = s.query(oGroup).filter(oGroup.id == gid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): utils.nprint("DB: Group found: ", mObj.id)
-		return mObj
+        if (nrm_config["debug"]>6): utils.nprint("DB: Group found: ", mObj.id)
+        return mObj
     else:
-		return None
+        return None
 
 def get_group_token(s, gid):
     if (nrm_config["debug"]>6): utils.nprint("DB: Group_token_query: ", gid)
     mObj = s.query(oGroup).filter(oGroup.id == gid).first()
     if mObj is not None:
-		if (nrm_config["debug"]>6): utils.nprint("DB: Group found: ", mObj.id)
-		return mObj.code
+        if (nrm_config["debug"]>6): utils.nprint("DB: Group found: ", mObj.id)
+        return mObj.code
     else:
-		return None
+        return None
 
 def insert_group(s, gid, login, passwd, code, dn):
     mObj = s.query(oGroup).filter(oGroup.id == gid).first()

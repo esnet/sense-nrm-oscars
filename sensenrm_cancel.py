@@ -85,7 +85,11 @@ class nrmCancel(object):
                 delta = s.query(sensenrm_db.oDelta).filter(sensenrm_db.oDelta.altid == cancelid).first()
                 if delta is None:
                     resp = "CANCEL_DELTAID_NOTFOUND:" + str(nrm_deltaid)
-                    if (nrm_config["debug"]>0): utils.nprint("CANCEL_DELTAID_NOTFOUND=", nrm_deltaid)
+                    if (nrm_config["debug"]>0): 
+                        utils.nprint("CANCEL_DELTAID_NOTFOUND=", nrm_deltaid)
+                    status = 400
+                    return status, resp
+
             if (nrm_config["debug"]>0):
                 utils.nprint("CANCEL_DELTA_ID=", nrm_deltaid, "=", delta.id)
                 utils.nprint("CANCEL_HELD_ID=", delta.heldid)

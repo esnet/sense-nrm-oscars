@@ -59,7 +59,12 @@ errors = {
 context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
 context.load_verify_locations(capath=ssl_config["capath"])
 context.load_cert_chain(ssl_config["hostcertpath"], ssl_config["hostkeypath"])
-ssl._https_verify_certificates(enable=ssl_config["httpsverify"])
+#2.7
+#ssl._https_verify_certificates(enable=ssl_config["httpsverify"])
+if (ssl_config["httpsverify"]):
+    context.verify_flags=ssl.VERIFY_X509_TRUSTED_FIRST
+else:
+    context.verify_flags=ssl.VERIFY_DEFAULT
 
 nrm_application = Flask(__name__)
 api = Api(nrm_application, errors=errors)
