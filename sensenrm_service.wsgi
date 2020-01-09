@@ -20,6 +20,6 @@
 # sdmsupport@lbl.gov
 #
 import sys
-sys.path.insert(0, "/home/asim/nrm")
+sys.path.insert(0, "/home/nrm")
 from sensenrm_server import nrm_application
 application = nrm_application
