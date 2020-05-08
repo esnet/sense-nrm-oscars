@@ -683,12 +683,12 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: GetToken DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                utils.nprint("OSCARS: Token FAILED:", resp._content)
+                utils.nprint("OSCARS: Token FAILED:", resp._content.decode("utf-8"))
             raise Exception('OSCARS: Cannot GetToken: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
             utils.nprint("OSCARS: Token_UID: ", uid)
-            utils.nprint("OSCARS: Token:", resp._content)
-        return str(resp._content)
+            utils.nprint("OSCARS: Token:", resp._content.decode("utf-8"))
+        return str(resp._content.decode("utf-8"))
     
     def get_sslinfo(self):
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: SSLinfo")
@@ -697,12 +697,12 @@ class nrm_oscars_connection(object):
             utils.nprint("OSCARS: SSLinfo DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                utils.nprint("OSCARS: SSLinfo FAILED:", resp._content)
+                utils.nprint("OSCARS: SSLinfo FAILED:", resp._content.decode("utf-8"))
             raise Exception('OSCARS: Cannot get_SSLinfo: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
             #utils.nprint("OSCARS: SSLinfo: ", resp.headers['content-type'])
-            utils.nprint("OSCARS: SSLinfo:", resp._content)
-        return str(resp._content)
+            utils.nprint("OSCARS: SSLinfo:", resp._content.decode("utf-8"))
+        return str(resp._content.decode("utf-8"))
             
     def get_info(self):
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: Info")
@@ -711,11 +711,11 @@ class nrm_oscars_connection(object):
             utils.nprint("OSCARS: Info DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                utils.nprint("OSCARS: Info FAILED:", resp._content)
+                utils.nprint("OSCARS: Info FAILED:", resp._content.decode("utf-8"))
             raise Exception('OSCARS: Cannot get_info: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
-            utils.nprint("OSCARS: Info:", resp._content)
-        return str(resp._content)
+            utils.nprint("OSCARS: Info:", resp._content.decode("utf-8"))
+        return str(resp._content.decode("utf-8"))
 
     def get_protected_info(self):
         with mydb_session() as s:
@@ -728,11 +728,11 @@ class nrm_oscars_connection(object):
             utils.nprint("OSCARS: Protected_SSL DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                utils.nprint("OSCARS: Protected_SSL FAILED:", resp._content)
+                utils.nprint("OSCARS: Protected_SSL FAILED:", resp._content.decode("utf-8"))
             raise Exception('OSCARS: Cannot get_protected_info: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6): 
-            utils.nprint("OSCARS: Protected_SSL:", resp._content)
-        return str(resp._content)
+            utils.nprint("OSCARS: Protected_SSL:", resp._content.decode("utf-8"))
+        return str(resp._content.decode("utf-8"))
 
     def writeAvail(self, mytime, acontent):
         timed_file = datetime.fromtimestamp(time.mktime(datetime.now().timetuple())).strftime('%Y%m%d-%H%M%S')
@@ -761,11 +761,11 @@ class nrm_oscars_connection(object):
             # utils.nprint("HERE_TOPO")
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                utils.nprint("OSCARS: MODEL_AVAIL FAILED: ", resp._content)
+                utils.nprint("OSCARS: MODEL_AVAIL FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS: Cannot get_avail_topo: {}'.format(resp.status_code))
         if (nrm_config["debug"]>8): 
-            utils.nprint("OSCARS: MODEL_AVAIL :\n", resp._content)
-            self.writeAvail(str(myutime1), str(resp._content))
+            utils.nprint("OSCARS: MODEL_AVAIL :\n", resp._content.decode("utf-8"))
+            self.writeAvail(str(myutime1), str(resp._content.decode("utf-8")))
         
         ## convert response to formatted output, eventually to SENSE API format
         myparser=nrm_oscars_json_parser()
@@ -776,7 +776,7 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>7): 
             with mydb_session() as s:
                 sensenrm_db.display_db_junctions(s)
-        return str(resp._content)
+        return str(resp._content.decode("utf-8"))
 
     def get_reserved(self):
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: RESERVED_LIST")
@@ -786,11 +786,11 @@ class nrm_oscars_connection(object):
             utils.nprint("OSCARS: GET_RESERVED_LIST_DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3):
-                utils.nprint("OSCARS: ReservedList FAILED: ", resp._content)
+                utils.nprint("OSCARS: ReservedList FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS Cannot get ReservedList: {}'.format(resp.status_code))
         if (nrm_config["debug"]>6):
-            utils.nprint("OSCARS: ReservedList:\n", resp._content)
-        return str(resp._content)
+            utils.nprint("OSCARS: ReservedList:\n", resp._content.decode("utf-8"))
+        return str(resp._content.decode("utf-8"))
         
     def get_conn_id(self, groupid):  # e.g. groupid = "default"
         with mydb_session() as s:
@@ -804,15 +804,15 @@ class nrm_oscars_connection(object):
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: ConnID DONE: ", resp.status_code)
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): 
-                utils.nprint("OSCARS: ConnID FAILED: ", resp._content)
+                utils.nprint("OSCARS: ConnID FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS: Cannot GetConnID : {}'.format(resp.status_code))
         if (nrm_config["debug"]>3): 
-            utils.nprint("OSCARS: ConnID: ", resp._content)
+            utils.nprint("OSCARS: ConnID: ", str(resp._content, "utf-8"))
             #utils.nprint("ConnID TYPE: ", type(resp._content))
 
         with mydb_session() as s:
-            sensenrm_db.insert_conn(s, resp._content, groupid)
-        return str(resp._content)
+            sensenrm_db.insert_conn(s, resp._content.decode("utf-8"), groupid)
+        return str(resp._content.decode("utf-8"))
     
     def get_pce(self, id, deltaid, src, dest, myutime1, myutime2):
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: Path_Computation")
@@ -829,9 +829,9 @@ class nrm_oscars_connection(object):
             }, verify=False)
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: Path_Computation DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: Path_Computation FAILED: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: Path_Computation FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS: Cannot get_PCE : {}'.format(resp.status_code))
-        if (nrm_config["debug"]>6): utils.nprint("OSCARS: Path_Computation: ", resp._content)
+        if (nrm_config["debug"]>6): utils.nprint("OSCARS: Path_Computation: ", resp._content.decode("utf-8"))
         ## convert response to formatted output, eventually to SENSE API format
         myparser=nrm_oscars_json_parser()
         mypce = myparser.pce_parser(id, deltaid, src, dest, myutime1, myutime2, resp.json())
@@ -887,11 +887,11 @@ class nrm_oscars_connection(object):
             verify=False, headers=myheaders)
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: CLEAR DONE: ", resp.status_code)
         if resp.status_code == 200:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CLEAR: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CLEAR: ", resp._content.decode("utf-8"))
         else:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CLEAR FAILED: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CLEAR FAILED: ", resp._content.decode("utf-8"))
             #raise Exception('OSCARS Cannot CLEAR: {}'.format(resp.status_code))
-        return resp.status_code, resp._content
+        return resp.status_code, resp._content.decode("utf-8")
 
     def get_commit(self, connid, groupid):
         with mydb_session() as s:
@@ -905,10 +905,10 @@ class nrm_oscars_connection(object):
             connid, verify=False, headers=myheaders)
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: COMMIT DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: COMMIT FAILED: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: COMMIT FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS Cannot COMMIT: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): utils.nprint("OSCARS: COMMIT: ", resp._content)
-        return resp.status_code, resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: COMMIT: ", resp._content.decode("utf-8"))
+        return resp.status_code, resp._content.decode("utf-8")
         
     def get_uncommit(self, connid, groupid):
         with mydb_session() as s:
@@ -922,10 +922,10 @@ class nrm_oscars_connection(object):
             }, verify=False, headers=myheaders)
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: UNCOMMIT DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: UNCOMMIT FAILED: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: UNCOMMIT FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS:Cannot UNCOMMIT : {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): utils.nprint("OSCARS: UNCOMMIT: ", resp._content)
-        return resp.status_code, resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: UNCOMMIT: ", resp._content.decode("utf-8"))
+        return resp.status_code, resp._content.decode("utf-8")
 
     def get_cancel(self, connid, groupid):
         with mydb_session() as s:
@@ -940,19 +940,19 @@ class nrm_oscars_connection(object):
             connid, verify=False, headers=myheaders)
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: CANCEL DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CANCEL FAILED: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: CANCEL FAILED: ", resp._content.decode("utf-8"))
             #raise Exception('OSCARS Cannot CANCEL: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): utils.nprint("OSCARS: CANCEL: ", resp._content)
-        return resp.status_code, resp._content
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: CANCEL: ", resp._content.decode("utf-8"))
+        return resp.status_code, resp._content.decode("utf-8")
 
     def get_status(self, connid):
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: STATUS")
         resp = requests.get(self._surl('/api/conn/info/'+connid), verify=False)
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: STATUS_DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: STATUS FAILED: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: STATUS FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS Cannot get STATUS: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): utils.nprint("OSCARS: STATUS:", resp._content)
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: STATUS:", resp._content.decode("utf-8"))
         return resp
 
     def dump(self, obj, nested_level=0, output=sys.stdout):
@@ -1133,9 +1133,9 @@ class nrm_oscars_connection(object):
         # response is when your hold expires before that you will need to do a commit
         if (nrm_config["debug"]>7): utils.nprint("OSCARS: HELD DONE: ", resp.status_code)
         if resp.status_code != 200:
-            if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD FAILED: ", resp._content)
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS Cannot HELD: {}'.format(resp.status_code))
-        if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD: ", resp._content)
+        if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD: ", resp._content.decode("utf-8"))
 
         return resp
         

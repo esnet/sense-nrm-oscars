@@ -101,6 +101,7 @@ class nrmCommit(object):
                     if (nrm_config["debug"]>0): utils.nprint("COMMIT EXCEPT: ", e)
                     status = 600
                 if status == 200:
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
                     sensenrm_db.insert_delta_value(s, nrm_deltaid, "status", "COMMITTED")
                     sensenrm_db.update_switch(s, nrm_deltaid, 1)
                     return True

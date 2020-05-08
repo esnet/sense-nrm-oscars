@@ -604,7 +604,7 @@ class nrmDelta(object):
                 raise
         
             if (resp.status_code == 200):
-                if (nrm_config["debug"]>4): utils.nprint("DELTA: HELD_OK_CONTENT=", resp._content)
+                if (nrm_config["debug"]>4): utils.nprint("DELTA: HELD_OK_CONTENT=", resp._content.decode("utf-8"))
                 with mydb_session() as s:
                     for k in list(dict_switches.keys()): # OLD: for k in dict_switches.keys()
                         mysw=dict_switches[k]
@@ -612,18 +612,18 @@ class nrmDelta(object):
                     sensenrm_db.insert_junction_bidports(s, nrmargs['id'], list_switches)
                     sensenrm_db.update_sys_value(s, "model_changed", 1)
 
-                return [{"id":str(nrmargs['id']),"description":str("oscars:"+connid),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content)}], resp.status_code
+                return [{"id":str(nrmargs['id']),"description":str("oscars:"+connid),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content.decode("utf-8"))}], resp.status_code
             else:
                 if (nrm_config["debug"]>3): 
                     utils.nprint("DELTA: HELD_FAILED_CONTENT=", resp.status_code)
-                    utils.nprint("DELTA: HELD_FAILED_CONTENT=", resp._content)
+                    utils.nprint("DELTA: HELD_FAILED_CONTENT=", resp._content.decode("utf-8"))
                 with mydb_session() as s:
                     sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", "HELD_FAILED")
                     sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
 
-                return [{"id":str(nrmargs['id']),"description":str("something_went_wrong_"+str(reductionFlag)),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content)}], resp.status_code
+                return [{"id":str(nrmargs['id']),"description":str("something_went_wrong_"+str(reductionFlag)),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content.decode("utf-8"))}], resp.status_code
 
-            return [{"id":str(nrmargs['id']),"description":str("oscars:"+connid),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content)}], resp.status_code
+            return [{"id":str(nrmargs['id']),"description":str("oscars:"+connid),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content.decode("utf-8"))}], resp.status_code
 
         return [{"id":str(nrmargs['id']),"description":str("something_went_wrong_"+str(reductionFlag)),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":""}], status
         

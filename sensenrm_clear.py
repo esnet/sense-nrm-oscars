@@ -99,8 +99,7 @@ class nrmClear(object):
                     if (nrm_config["debug"]>0):
                         utils.nprint("CLEAR_STATUS=", status)
                         utils.nprint("CLEAR_RESP=", resp)
-                    with mydb_session() as s:
-                        sensenrm_db.update_sys_value(s, "model_changed", 1)
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
             else:
                 if (nrm_config["debug"]>0):
                     utils.nprint("CLEAR_UNAUTHORIZED_USER: ", uid)

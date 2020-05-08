@@ -123,6 +123,7 @@ class nrmCancel(object):
                         utils.nprint("CANCEL_RESP=", resp)
                         utils.nprint("CANCELALL_TIMEDELAY_60")
                     time.sleep(60) # time delay 60 seconds for the OSCARS switch reset delay time issue, after "cancel" for committed vlans
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
             else:
                 if (nrm_config["debug"]>0):
                     utils.nprint("CANCEL_UNAUTHORIZED_USER: ", uid)

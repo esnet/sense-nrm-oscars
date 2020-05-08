@@ -37,7 +37,7 @@ optional arguments:
   --key KEY_PATH        User certificate key path. Must be paired with --cert.
   -s NRMSERVICE_ENDPOINT, --service NRMSERVICE_ENDPOINT
                         NRM service endpoint info. 
-                        e.g. dev-sense-nrm.es.net:443
+                        e.g. sense-nrm.es.net:443
   --info                Collect service info over SSL. Default=False
   --sslinfo             Collect service info over SSL. Default=False
   --models              Get Models. Default=False
@@ -110,7 +110,7 @@ ports = ["2010", "2010"]
 ### 1 Gbps in bps
 bandwidth="1000000000" # in bps = 1Gbps
 #############################################
-nrmservice_http = "dev-sense-nrm.es.net:8443"
+nrmservice_http = "sense-nrm.es.net:8443"
 urnprefix = "urn:ogf:network:es.net:2019"
 ################################################################
 ################################################################
@@ -197,29 +197,6 @@ def data_b64decode_gunzip(tcontent):
     unzipped_data = zlib.decompress(base64.b64decode(tcontent), 16+zlib.MAX_WBITS)
     return unzipped_data
 
-# output of json
-#def dump(obj, nested_level=0, output=sys.stdout):
-#    spacing = '   '
-#    if type(obj) == dict:
-#        print >> output, '%s{' % ((nested_level) * spacing)
-#        for k, v in obj.items():
-#            if hasattr(v, '__iter__'):
-#                print >> output, '%s%s:' % ((nested_level + 1) * spacing, k)
-#                dump(v, nested_level + 1, output)
-#            else:
-#                print >> output, '%s%s: %s' % ((nested_level + 1) * spacing, k, v)
-#        print >> output, '%s}' % (nested_level * spacing)
-#    elif type(obj) == list:
-#        print >> output, '%s[' % ((nested_level) * spacing)
-#        for v in obj:
-#            if hasattr(v, '__iter__'):
-#                dump(v, nested_level + 1, output)
-#            else:
-#                print >> output, '%s%s' % ((nested_level + 1) * spacing, v)
-#        print >> output, '%s]' % ((nested_level) * spacing)
-#    else:
-#        print >> output, '%s%s' % (nested_level * spacing, obj)
-#
 def dump(obj, nested_level=0):
     spacing = '   '
     if type(obj) == dict:
@@ -256,7 +233,7 @@ def get_info():
     myprint("NRM info status: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/info Error: {}'.format(resp.status_code))
-    print("NRM info response: " + str(resp._content)) 
+    print("NRM info response: " + str(resp._content.decode("utf-8"))) 
     
 def get_sslinfo():
     rurl = service_end_point() + '/sslinfo'
@@ -265,7 +242,7 @@ def get_sslinfo():
     if resp.status_code != 200:
         raise Exception('/sslinfo Error: {}'.format(resp.status_code))
     #print("heressl: " + str(resp.headers['content-type']))
-    print("NRM sslinfo response: " +str(resp._content))
+    print("NRM sslinfo response: " +str(resp._content.decode("utf-8")))
 
 def get_models():
     myheaders = {'If-Modified-Since': time_rfc1123() }
@@ -273,10 +250,10 @@ def get_models():
     print("NRM models status: " + str(resp.status_code))
     if resp.status_code == 304:
         myprint("NRM models response header: " + str(resp.headers))
-        myprint("NRM models response content: " + str(resp._content))
+        myprint("NRM models response content: " + str(resp._content.decode("utf-8")))
         #myprint("NRM models response header Last-Modified: " + str(resp.headers['Last-Modified']))
         #myprint("NRM models response header content-type: " + str(resp.headers['content-type']))
-        if (len(str(resp._content)) > 0):
+        if (len(str(resp._content.decode("utf-8"))) > 0):
             dump(resp.json())
         return True
     #elif resp.status_code != 200:
@@ -325,7 +302,7 @@ def post_deltas_request(deltacontent, deltaid, reduction):
         dump(resp.json())
         raise Exception('/deltas Error {}'.format(resp.status_code))
     myprint("NRM request deltas response header: " + str(resp.headers['content-type']))
-    myprint("NRM request deltas response content: " + str(resp._content))
+    myprint("NRM request deltas response content: " + str(resp._content.decode("utf-8")))
     print('NRM request deltas response:')
     print(json.dumps(resp.json(), indent = 4))
     
@@ -372,7 +349,7 @@ def cancel_delta(deltaid):
     myprint("NRM cancel status: " + str(resp.status_code))
     if resp.status_code != 200:
         print('NRM cancel non-successful response:')
-        print(str(resp._content))
+        print(str(resp._content.decode("utf-8")))
         #dump(resp.json())
         raise Exception('/deltas/actions/cancel Error')
     print('NRM cancel result: {}'.format(resp.json()["result"]))
@@ -456,7 +433,7 @@ def get_active_requests():
     myprint("NRM collect all active requests: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/protercted/requests/active Error: {}'.format(resp.status_code))
-    myprint("NRM collect all active requests response:" + str(resp._content))
+    myprint("NRM collect all active requests response:" + str(resp._content.decode("utf-8")))
     print('NRM collect all response:')
     print(json.dumps(resp.json(), indent = 4))
     
@@ -466,7 +443,7 @@ def cancel_all_requests():
     myprint("NRM cancel all active requests: " + str(resp.status_code))
     if resp.status_code != 200:
         raise Exception('/protercted/requests/active Error: {}'.format(resp.status_code))
-    myprint("NRM cancel all active requests response:" + str(resp._content))
+    myprint("NRM cancel all active requests response:" + str(resp._content.decode("utf-8")))
     print('NRM cancel all response:')
     print(json.dumps(resp.json(), indent = 4))
     
@@ -501,7 +478,7 @@ parser.add_argument("--capath", action="store", dest="ca_path", required=False, 
 parser.add_argument("--cert", action="store", dest="cert_path", required=False, help="User certificate path. Must be paired with --key.") 
 parser.add_argument("--key", action="store", dest="key_path", required=False, help="User certificate key path. Must be paired with --cert.")
 
-parser.add_argument("-s", "--service", action="store", dest="nrmservice_endpoint", required=False, help="NRM service endpoint info. e.g. dev-sense-nrm.es.net:443")
+parser.add_argument("-s", "--service", action="store", dest="nrmservice_endpoint", required=False, help="NRM service endpoint info. e.g. sense-nrm.es.net:443")
 
 parser.add_argument("--info", action="store_true", dest="nrminfo", required=False, help="Collect service info over SSL. Default=False") 
 parser.add_argument("--sslinfo", action="store_true", dest="nrmsslinfo", required=False, help="Collect  service info over SSL. Default=False") 
