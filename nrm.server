@@ -28,19 +28,19 @@ if [ $# -gt 0 ]; then
 	    else
 			if find $NRM_HOME -name "apache.*.sock*" -print -quit | grep -q '^'; then
 			  echo "REMOVE apache.*.sock*"
-			  sudo rm -f $NRM_HOME/apache.*.sock*
+			  rm -f $NRM_HOME/apache.*.sock*
 			fi
 			if [ -f "$APACHELOG/httpd.pid" ]; then
 			  echo "REMOVE httpd.pid"
-			  sudo rm -f $APACHELOG/httpd.pid
+			  rm -f $APACHELOG/httpd.pid
 			fi
 			if find $APACHELOG -name "authdigest_shm.*" -print -quit | grep -q '^'; then
 			  echo "REMOVE authdigest_shm.*"
-			  sudo rm -f $APACHELOG/authdigest_shm.*
+			  rm -f $APACHELOG/authdigest_shm.*
 			fi
 	    fi
 				
-		sudo $APACHE_HOME/apachectl start -e debug
+		$APACHE_HOME/apachectl start -e debug
 
 	elif [ "x$OPTION" = "xrestart"  ] ; then
 	    echo "RESTART"
@@ -49,23 +49,23 @@ if [ $# -gt 0 ]; then
 		    echo "there are NO other nrm processes"
 			if find $NRM_HOME -name "apache.*.sock*" -print -quit | grep -q '^'; then
 			  echo "REMOVE apache.*.sock*"
-			  sudo rm -f $NRM_HOME/apache.*.sock*
+			  rm -f $NRM_HOME/apache.*.sock*
 			fi
 			if [ -f "$APACHELOG/httpd.pid" ]; then
 			  echo "REMOVE httpd.pid"
-			  sudo rm -f $APACHELOG/httpd.pid
+			  rm -f $APACHELOG/httpd.pid
 			fi
 			if find $APACHELOG -name "authdigest_shm.*" -print -quit | grep -q '^'; then
 			  echo "REMOVE authdigest_shm.*"
-			  sudo rm -f $APACHELOG/authdigest_shm.*
+			  rm -f $APACHELOG/authdigest_shm.*
 			fi
 	    fi
 		
-	    sudo $APACHE_HOME/apachectl restart -e debug
+	    $APACHE_HOME/apachectl restart -e debug
 				
 	elif [ "x$OPTION" = "xstop" ] ; then
 	    echo "STOP"
-	    sudo $APACHE_HOME/apachectl stop
+	    $APACHE_HOME/apachectl stop
 		
 	elif [ "x$OPTION" = "xbackup"  ] ; then
 	    echo "BACKUP LOG"
