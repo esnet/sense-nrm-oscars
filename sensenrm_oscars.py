@@ -1135,6 +1135,9 @@ class nrm_oscars_connection(object):
         if resp.status_code != 200:
             if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD FAILED: ", resp._content.decode("utf-8"))
             raise Exception('OSCARS Cannot HELD: {}'.format(resp.status_code))
+        if ('\"valid\" : false' in resp._content.decode("utf-8")):
+            if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD FAILED with false valid: ", resp._content.decode("utf-8"))
+            raise Exception('OSCARS Cannot HELD: {}'.format("valid:false"))
         if (nrm_config["debug"]>3): utils.nprint("OSCARS: HELD: ", resp._content.decode("utf-8"))
 
         return resp

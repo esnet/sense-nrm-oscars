@@ -272,9 +272,16 @@ class nrmModel(object):
                         dvlan = mydeltavlan.split(",")
                         durs = mydeltaurs.split(",")
                         for dv in dvlan:
-                            if (len(dv) > 0) :
-                                dvi = dvlan.index(dv)
-                                modelcontent = modelcontent + '<' + urnpr + '::ServiceDomain:EVTS.A-GOLE:conn+'+ mydeltaid +':' + durs[dvi] + ':vlan+' + str(dv)+'>\n        a                       mrs:SwitchingSubnet ; \n        nml:belongsTo   <' + urnpr + '::ServiceDomain:EVTS.A-GOLE> ; \n        nml:encoding    <http://schemas.ogf.org/nml/2012/10/ethernet> ; \n        nml:existsDuring    <' + urnpr + '::ServiceDomain:EVTS.A-GOLE:conn+'+ mydeltaid + ':' + durs[dvi] + ':vlan+' +str(dv)+':existsDuring> ; \n        nml:hasBidirectionalPort  ' + scontent + ' ; \n        nml:labelSwapping   true ; \n        nml:labelType   <http://schemas.ogf.org/nml/2012/10/ethernet#vlan> . \n\n '
+                            try:
+                                if (len(dv) > 0) :
+                                    dvi = dvlan.index(dv)
+                                    modelcontent = modelcontent + '<' + urnpr + '::ServiceDomain:EVTS.A-GOLE:conn+'+ mydeltaid +':' + durs[dvi] + ':vlan+' + str(dv)+'>\n        a                       mrs:SwitchingSubnet ; \n        nml:belongsTo   <' + urnpr + '::ServiceDomain:EVTS.A-GOLE> ; \n        nml:encoding    <http://schemas.ogf.org/nml/2012/10/ethernet> ; \n        nml:existsDuring    <' + urnpr + '::ServiceDomain:EVTS.A-GOLE:conn+'+ mydeltaid + ':' + durs[dvi] + ':vlan+' +str(dv)+':existsDuring> ; \n        nml:hasBidirectionalPort  ' + scontent + ' ; \n        nml:labelSwapping   true ; \n        nml:labelType   <http://schemas.ogf.org/nml/2012/10/ethernet#vlan> . \n\n '
+                            except Exception as e:
+                                if (nrm_config["debug"]>0): 
+                                    utils.nprint("MODEL EXCEPT in active dvlan: ", e)
+                                    utils.nprint("MODEL EXCEPT dvlan: ",dvlan) 
+                                    utils.nprint("MODEL EXCEPT dv: ",dv) 
+                                    utils.nprint("MODEL EXCEPT durs: ",durs) 
 
                 if len(mDelta.altvlan) > 0:
                     mydeltavlan = mDelta.altvlan # there is always one
