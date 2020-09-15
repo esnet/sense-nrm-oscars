@@ -602,6 +602,15 @@ def remove_expired_deltas(s):
                     utils.nprint("DB: IS_EXPIRED_REMOVE=", f.id)
                     utils.nprint("DB: IS_EXPIRED_ENDTIME=", f.time_end)
                 insert_idelta_remove_delta(s, f.id, False, "")
+            elif (f.status == "REQUESTED"):
+                tdiff2 = get_time_diff(current_time, f.time_begin)
+                if (tdiff2 > 900):
+                    if (nrm_config["debug"]>3):
+                        utils.nprint("DB: IS_EXPIRED_FROM_HELD_TDIFF2=", tdiff2)
+                        utils.nprint("DB: IS_EXPIRED_FROM_HELD_REMOVE=", f.id)
+                        utils.nprint("DB: IS_EXPIRED_FROM_HELD_BEGINTIME=", f.time_begin)
+                    insert_idelta_remove_delta(s, f.id, False, "")
+
     else:
         if (nrm_config["debug"]>6): utils.nprint("DB: REMOVE_EXPIRED_DELTAS NO_ACTIVE_DELTAS")
 
@@ -630,6 +639,15 @@ def remove_expired_delta(s, did):
                 utils.nprint("DB: IS2_EXPIRED_ENDTIME=", time_to_compare)
             insert_idelta_remove_delta(s, mObj.id, False, "")
             resp_status = True
+        elif (mObj.status == "REQUESTED"):
+            tdiff2 = get_time_diff(current_time, mObj.time_begin)
+            if (tdiff2 > 900):
+                if (nrm_config["debug"]>3):
+                    utils.nprint("DB: IS_EXPIRED_FROM_HELD_TDIFF2=", tdiff2)
+                    utils.nprint("DB: IS_EXPIRED_FROM_HELD_REMOVE=", mObj.id)
+                    utils.nprint("DB: IS_EXPIRED_FROM_HELD_BEGINTIME=", mObj.time_begin)
+                insert_idelta_remove_delta(s, mObj.id, False, "")
+                resp_status = True
     return resp_status    
 
 def is_delta_active(s, did, checkInactive):
