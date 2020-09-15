@@ -113,8 +113,12 @@ def get_delayed_time(delay_days):
     mytime11=mytime1
     if delay_days != 0:
         import time
-        from datetime import date
+        from datetime import date, timedelta
         today = date.fromtimestamp(time.time())
+        mytime2 = today + timedelta(days=delay_days)
+        mytime11 = mytime2
+    return mytime11
+'''
         newday = mytime1.day+delay_days
         newmonth = mytime1.month
         daycomp = 30
@@ -124,8 +128,8 @@ def get_delayed_time(delay_days):
             newday = mytime1.day+delay_days - daycomp
             newmonth = mytime1.month + 1
         mytime2=datetime(mytime1.year, newmonth, newday, mytime1.hour, mytime1.minute, mytime1.second, tzinfo=utc)
-        mytime11 = mytime2
     return mytime11
+'''
 
 def get_datetime_str(unixtime):
     fmt_datetime=datetime.fromtimestamp(float(str(unixtime))).strftime('%Y-%m-%d %H:%M:%S')

@@ -109,6 +109,7 @@ class nrmCancel(object):
                     sensenrm_db.update_switch(s, did, 0)
                     sensenrm_db.remove_junction_bidports_with_delta(s, did)
                     sensenrm_db.insert_idelta_remove_delta(s, did, True, cancelid)
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
                     if (nrm_config["debug"]>0): 
                         utils.nprint("Cannot_CANCEL_BUT_Cancelled_400_404: ", status)
                 elif status != 200:
@@ -118,6 +119,7 @@ class nrmCancel(object):
                     sensenrm_db.update_switch(s, did, 0)
                     sensenrm_db.remove_junction_bidports_with_delta(s, did)
                     sensenrm_db.insert_idelta_remove_delta(s, did, True, cancelid)
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
                     if (nrm_config["debug"]>0): 
                         utils.nprint("CANCEL_STATUS=", status)
                         utils.nprint("CANCEL_RESP=", resp)
@@ -162,6 +164,7 @@ class nrmCancel(object):
                         sensenrm_db.update_switch(s, did, 0)
                         sensenrm_db.remove_junction_bidports_with_delta(s, did)
                         sensenrm_db.insert_idelta_remove_delta(s, did, True, "")
+                        sensenrm_db.update_sys_value(s, "model_changed", 1)
                         if (nrm_config["debug"]>0):
                             utils.nprint("Cannot_CANCELALL_BUT_Cancelled_400: ", status)
                         result = result + "OK2"
@@ -173,6 +176,7 @@ class nrmCancel(object):
                         sensenrm_db.update_switch(s, did, 0)
                         sensenrm_db.remove_junction_bidports_with_delta(s, did)
                         sensenrm_db.insert_idelta_remove_delta(s, did, True, "")
+                        sensenrm_db.update_sys_value(s, "model_changed", 1)
                         if (nrm_config["debug"]>0):
                             utils.nprint("CANCELALL_STATUS=", status)
                             utils.nprint("CANCELALL_RESP=", resp)

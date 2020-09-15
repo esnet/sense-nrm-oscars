@@ -148,6 +148,11 @@ class nrmDelta(object):
     def get_delayed_time(self, delay_hours):
         mytime1=datetime.now(self.utc)
         if delay_hours != 0:
+            future_date = mytime1 + timedelta(hours=delay_hours)
+            mytime1 = future_date
+            if (nrm_config["debug"]>7):
+                utils.nprint("DELTA: new DELAYED time=", mytime1)
+            '''
             adays = int((mytime1.hour+delay_hours) / 24)
             amonth=0
             year=0
@@ -173,6 +178,7 @@ class nrmDelta(object):
                 utils.nprint("DELTA: DELAYED days=", days)
                 utils.nprint("DELTA: DELAYED hours=", hours)
             mytime1=datetime(mytime1.year+year, months, days, mytime1.hour+hours, mytime1.minute, mytime1.second, tzinfo=self.utc)
+        '''
         return mytime1
 
     def get_delayed_time_5min(self):
@@ -581,6 +587,7 @@ class nrmDelta(object):
                     with mydb_session() as s:
                         sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", str(e))
                         sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
+                        sensenrm_db.update_sys_value(s, "model_changed", 1)
                     raise
 
             myfix=[]
@@ -601,6 +608,7 @@ class nrmDelta(object):
                 with mydb_session() as s:
                     sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", str(e))
                     sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
                 raise
         
             if (resp.status_code == 200):
@@ -620,6 +628,7 @@ class nrmDelta(object):
                 with mydb_session() as s:
                     sensenrm_db.insert_delta_value(s, nrmargs['id'], "additional_info", "HELD_FAILED")
                     sensenrm_db.insert_idelta_remove_delta(s, nrmargs['id'], cancelled=False, cancel_id="") 
+                    sensenrm_db.update_sys_value(s, "model_changed", 1)
 
                 return [{"id":str(nrmargs['id']),"description":str("something_went_wrong_"+str(reductionFlag)),"lastModified":str(datetime.now()),"modelId":str(nrmargs['modelId']),"reduction":"", "addition":str(resp._content.decode("utf-8"))}], resp.status_code
 

@@ -549,21 +549,43 @@ def insert_idelta_remove_delta(s, did, cancelled, cid):
             if (nrm_config["debug"]>6): utils.nprint("DB: inactive delta exists=", did)
             #timenow = datetime.utcnow()
             timenow = str(datetime.now(utc))
-            creation_date = creation_date + ":" + timenow
-            active_creation_date = active_creation_date + ":" + mObj.creation_date
-            heldhistory = miObj.held_history + "," + mObj.heldid
-            miObj.held_history = heldhistory
-            timehistory = miObj.time_history + "," + mObj.time_begin + ":" + mObj.time_end
-            miObj.time_history = timehistory
+            #creation_date = creation_date + ":" + timenow
+            #active_creation_date = active_creation_date + ":" + mObj.creation_date
+            #heldhistory = miObj.held_history + "," + mObj.heldid
+            #miObj.held_history = heldhistory
+            #timehistory = miObj.time_history + "," + mObj.time_begin + ":" + mObj.time_end
+            #miObj.time_history = timehistory
+            #if cancelled: 
+            #    miObj.status = "CANCELLED"
+            #    miObj.cancelid = cid
+            #else:
+            #    miObj.status = "EXPIRED"
+            #s.add(miObj)
+
+            mystatus = "CANCELLED"
+            if not cancelled: 
+                mystatus = "EXPIRED"
+
+            # with new ID, always add to oiDelta list
+            did_new = did+str(":")+str(mObj.altid)
+            oj = oiDelta(id=did, modelid=mObj.modelid, userid= mObj.userid, time_begin=mObj.time_begin, time_end=mObj.time_end, creation_date=timenow, active_creation_date=mObj.creation_date, switch_list=mObj.switch_list, altid=mObj.altid, altvlan=mObj.altvlan, heldid=mObj.heldid, urs=mObj.urs, status=mystatus, additional_info=mObj.additional_info)
+            oj.held_history = mObj.heldid
+            timehistory = mObj.time_begin + ":" + mObj.time_end
+            oj.time_history = timehistory
             if cancelled: 
-                miObj.status = "CANCELLED"
-                miObj.cancelid = cid
-            else:
-                miObj.status = "EXPIRED"
-            s.add(miObj)
+                oj.cancelid = cid
+
+            try:
+                s.add(oj)
+            except Exception as e:
+                if (nrm_config["debug"]>0): utils.nprint("DB: INACTIVE_DELTA EXCEPT: ", e)
+            if (nrm_config["debug"]>6): utils.nprint("DB: inactive delta exists_added=", did_new)
+
         # Delete from the active deltas list
         s.delete(mObj)
         s.commit()
+        # notify model change
+        #update_sys_value(s, "model_changed", 1)
 
 def convert_str_to_datetime(mystr):
     if (nrm_config["debug"]>6): utils.nprint("DB: convert_time: ", mystr)
@@ -590,6 +612,7 @@ def remove_expired_deltas(s):
         current_time = datetime.now(utc)
         if (nrm_config["debug"]>6):
             utils.nprint("DB: IS_EXPIRED_NOWTIME=", current_time)
+        modelUpdated=False
         for f in allDeltas:
             tdiff = get_time_diff(f.time_end, current_time)
             #if (nrm_config["debug"]>4):
@@ -602,15 +625,18 @@ def remove_expired_deltas(s):
                     utils.nprint("DB: IS_EXPIRED_REMOVE=", f.id)
                     utils.nprint("DB: IS_EXPIRED_ENDTIME=", f.time_end)
                 insert_idelta_remove_delta(s, f.id, False, "")
+                modelUpdated=True
             elif (f.status == "REQUESTED"):
-                tdiff2 = get_time_diff(current_time, f.time_begin)
+                tdiff2 = abs(get_time_diff(f.time_begin, current_time))
                 if (tdiff2 > 900):
                     if (nrm_config["debug"]>3):
                         utils.nprint("DB: IS_EXPIRED_FROM_HELD_TDIFF2=", tdiff2)
                         utils.nprint("DB: IS_EXPIRED_FROM_HELD_REMOVE=", f.id)
                         utils.nprint("DB: IS_EXPIRED_FROM_HELD_BEGINTIME=", f.time_begin)
                     insert_idelta_remove_delta(s, f.id, False, "")
-
+                    modelUpdated=True
+        if (modelUpdated):
+            update_sys_value(s, "model_changed", 1)
     else:
         if (nrm_config["debug"]>6): utils.nprint("DB: REMOVE_EXPIRED_DELTAS NO_ACTIVE_DELTAS")
 
@@ -639,8 +665,9 @@ def remove_expired_delta(s, did):
                 utils.nprint("DB: IS2_EXPIRED_ENDTIME=", time_to_compare)
             insert_idelta_remove_delta(s, mObj.id, False, "")
             resp_status = True
+            update_sys_value(s, "model_changed", 1)
         elif (mObj.status == "REQUESTED"):
-            tdiff2 = get_time_diff(current_time, mObj.time_begin)
+            tdiff2 = abs(get_time_diff(mObj.time_begin, current_time))
             if (tdiff2 > 900):
                 if (nrm_config["debug"]>3):
                     utils.nprint("DB: IS_EXPIRED_FROM_HELD_TDIFF2=", tdiff2)
@@ -648,6 +675,7 @@ def remove_expired_delta(s, did):
                     utils.nprint("DB: IS_EXPIRED_FROM_HELD_BEGINTIME=", mObj.time_begin)
                 insert_idelta_remove_delta(s, mObj.id, False, "")
                 resp_status = True
+                update_sys_value(s, "model_changed", 1)
     return resp_status    
 
 def is_delta_active(s, did, checkInactive):

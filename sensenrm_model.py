@@ -137,6 +137,12 @@ class nrmModel(object):
         utc = UTC()
         mytime1=datetime.now(utc)
         if delay_days != 0:
+            future_date = mytime1 + timedelta(days=delay_days)
+            if (nrm_config["debug"]>3):
+                utils.nprint("MODEL: new Delayed days=", future_date)
+            mytime1 = future_date
+        return mytime1
+    '''
             newday = mytime1.day+delay_days
             newmonth = mytime1.month
             daycomp = 30
@@ -147,6 +153,7 @@ class nrmModel(object):
                 newmonth = mytime1.month + 1
             mytime1=datetime(mytime1.year, newmonth, newday, mytime1.hour, mytime1.minute, mytime1.second, tzinfo=utc)
         return mytime1
+    '''
     
     def writeModel(self, nrm_uuid, modelcontent):
         timed_file = datetime.fromtimestamp(time.mktime(datetime.now().timetuple())).strftime('%Y%m%d-%H%M%S')
