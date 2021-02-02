@@ -515,28 +515,43 @@ class nrmDelta(object):
                         if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_SUBJ:", subject)
                         subj2 = subject.split("::")
                         if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_SUBJ2:", subj2)
+
                         subj3 = subj2[1].split(":")
                         if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_SUBJ3:", subj3)
                         delta_connp = subj3[2].split("+")[1]
                         if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_ID+:", delta_connp)
 
-                        d_urs = subj3[3]
-                        if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_URI_STRING:", d_urs)
-                        if not (d_urs in list_urs):
-                            list_urs.append(d_urs)
-                            if len(delta_urs) > 0:
-                                delta_urs=delta_urs+","+d_urs
-                            else:
-                                delta_urs=d_urs
+                        if (len(subj2) > 2):
+                            if (nrm_config["debug"]>9): 
+                                utils.nprint("DELTA: CONN_SUBJ2:LEN>2:", len(subj2))
+                                utils.nprint("DELTA: CONN_URI_STRING:NULL")
 
-                        d_avlan = subj3[4].split("+")[1]
-                        if (nrm_config["debug"]>6): utils.nprint("DELTA: CONN_ID+VLAN:", d_avlan)
-                        if not (d_avlan in list_avlans):
-                            list_avlans.append(d_avlan)
-                            if len(delta_avlan) > 0:
-                                delta_avlan=delta_avlan+","+d_avlan
-                            else:
-                                delta_avlan=d_avlan
+                            d_avlan = subj2[2].split(":")[0].split("+")[1]
+                            if (nrm_config["debug"]>6): utils.nprint("DELTA: CONN_ID+VLAN:", d_avlan)
+                            if not (d_avlan in list_avlans):
+                                list_avlans.append(d_avlan)
+                                if len(delta_avlan) > 0:
+                                    delta_avlan=delta_avlan+","+d_avlan
+                                else:
+                                    delta_avlan=d_avlan
+                        else:
+                            d_urs = subj3[3]
+                            if (nrm_config["debug"]>9): utils.nprint("DELTA: CONN_URI_STRING:", d_urs)
+                            if not (d_urs in list_urs):
+                                list_urs.append(d_urs)
+                                if len(delta_urs) > 0:
+                                    delta_urs=delta_urs+","+d_urs
+                                else:
+                                    delta_urs=d_urs
+
+                            d_avlan = subj3[4].split("+")[1]
+                            if (nrm_config["debug"]>6): utils.nprint("DELTA: CONN_ID+VLAN:", d_avlan)
+                            if not (d_avlan in list_avlans):
+                                list_avlans.append(d_avlan)
+                                if len(delta_avlan) > 0:
+                                    delta_avlan=delta_avlan+","+d_avlan
+                                else:
+                                    delta_avlan=d_avlan
                 
             if (len(list_switches) < 1):
                 raise Exception('DELTA: ADDITION: NO SWITCHES FOUND.')
