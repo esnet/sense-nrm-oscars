@@ -717,7 +717,9 @@ def get_all_active_deltas(s, uid):
         isadmin = is_admin(s, uid)
         if isadmin:
             for f in allDeltas:
-                allids = allids + f.id
+                #allids = allids + f.id
+                # 210916 for complete info
+                allids = allids + "id=" + f.id + " oscarsid=" + f.heldid + " created=" + f.creation_date + " switchlist=" + f.switch_list + " status=" + f.status
                 if allDeltas.index(f) != len(allDeltas)-1:
                     allids = allids + ','
             if (nrm_config["debug"]>6): utils.nprint("DB::all_active_deltas_admin=", allids)
@@ -725,7 +727,9 @@ def get_all_active_deltas(s, uid):
         else:
             for f in allDeltas:
                 if (f.userid == uid):
-                    myids = myids + f.id
+                    #myids = myids + f.id
+                    # 210916 for complete info
+                    myids = myids + "id=" + f.id + " oscarsid=" + f.heldid + " created=" + f.creation_date + " switchlist=" + f.switch_list + " status=" + f.status
                     if allDeltas.index(f) != len(allDeltas)-1:
                         myids = myids + ','
             if (nrm_config["debug"]>6): utils.nprint("DB::all_active_deltas_user=", myids)
