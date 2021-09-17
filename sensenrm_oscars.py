@@ -1106,7 +1106,7 @@ class nrm_oscars_connection(object):
             "junctions": ' + myjuncs + ', \
             "pipes": ' + mypipe + ', \
             "fixtures": ' + myfix + ', \
-            "description": "' + deltaid + '" \
+            "description": "SENSE-' + deltaid + '" \
             }'
             
         jsonobj=json.loads(jsontext, object_pairs_hook=OrderedDict)
