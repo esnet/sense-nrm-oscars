@@ -1,0 +1,105 @@
+#!/bin/sh
+ 
+if test ! "$NRM_HOME" ; then
+    NRM_HOME=/home/asim/nrm
+fi
+APACHE_HOME=/home/asim/nrm/apache
+APACHELOG=/home/asim/nrm/apache/logs
+
+if [ ! -f "$NRM_HOME/nrm.server" ]; then
+  echo "ERROR: Cannot find the NRM_HOME location,"
+  echo "ERROR: Please define \$NRM_HOME correctly"
+  exit 1;
+fi
+
+# nrm.server start
+if [ $# -gt 0 ]; then
+    OPTION=$1
+    if [ "x$OPTION" = "xstart" ] ; then
+	    echo "START"
+	    plist=`ps -afe | grep $APACHE_HOME | grep httpd | awk "/apache/ && ! /awk/ {print \\$2}"`
+	    if test "$plist" ; then
+		    echo "there are other nrm processes running already"
+		    for p in $plist ; do
+			    echo -n $p ' ... '
+		    done
+		    echo " "
+		    echo "if this is intentional, please use restart"
+	    else
+			if find $NRM_HOME -name "apache.*.sock*" -print -quit | grep -q '^'; then
+			  echo "REMOVE apache.*.sock*"
+			  rm -f $NRM_HOME/apache.*.sock*
+			fi
+			if [ -f "$APACHELOG/httpd.pid" ]; then
+			  echo "REMOVE httpd.pid"
+			  rm -f $APACHELOG/httpd.pid
+			fi
+			if find $APACHELOG -name "authdigest_shm.*" -print -quit | grep -q '^'; then
+			  echo "REMOVE authdigest_shm.*"
+			  rm -f $APACHELOG/authdigest_shm.*
+			fi
+	    fi
+				
+		$APACHE_HOME/apachectl start -e debug
+
+	elif [ "x$OPTION" = "xrestart"  ] ; then
+	    echo "RESTART"
+	    plist=`ps -afe | grep $APACHE_HOME | grep httpd | awk "/apache/ && ! /awk/ {print \\$2}"`
+	    if test ! "$plist" ; then
+		    echo "there are NO other nrm processes"
+			if find $NRM_HOME -name "apache.*.sock*" -print -quit | grep -q '^'; then
+			  echo "REMOVE apache.*.sock*"
+			  rm -f $NRM_HOME/apache.*.sock*
+			fi
+			if [ -f "$APACHELOG/httpd.pid" ]; then
+			  echo "REMOVE httpd.pid"
+			  rm -f $APACHELOG/httpd.pid
+			fi
+			if find $APACHELOG -name "authdigest_shm.*" -print -quit | grep -q '^'; then
+			  echo "REMOVE authdigest_shm.*"
+			  rm -f $APACHELOG/authdigest_shm.*
+			fi
+	    fi
+		
+	    $APACHE_HOME/apachectl restart -e debug
+				
+	elif [ "x$OPTION" = "xstop" ] ; then
+	    echo "STOP"
+	    $APACHE_HOME/apachectl stop
+		
+	elif [ "x$OPTION" = "xbackup"  ] ; then
+	    echo "BACKUP LOG"
+		OLDDIR="old"
+		MYDATE=`date +"%y%m%d-%H%M"`
+		BACKUP_NAME="bkup-logs-$MYDATE.tar.gz"
+		tar zcf $NRM_HOME/logs/$OLDDIR/$BACKUP_NAME \
+			$NRM_HOME/nrmdb.db \
+			$NRM_HOME/logs/*.txt
+		rm -f $NRM_HOME/logs/*.txt
+		ls -l $NRM_HOME/logs/$OLDDIR/$BACKUP_NAME
+	    
+		ACCESSLOG_NAME="access_log-$MYDATE"
+		ERRORLOG_NAME="error_log-$MYDATE"
+		SSLLOG_NAME="ssl_request_log-$MYDATE"
+		BACKUPWEB_NAME="bkup-weblog-$MYDATE.tar.gz"
+		tar zcf $APACHELOG/$OLDDIR/$BACKUPWEB_NAME \
+			$APACHELOG/access_log.* \
+			$APACHELOG/error_log.* \
+			$APACHELOG/ssl_request_log.*
+		rm -f $APACHELOG/access_log.*
+		rm -f $APACHELOG/error_log.*
+		rm -f $APACHELOG/ssl_request_log.*
+		ls -l $APACHELOG/$OLDDIR/$BACKUPWEB_NAME
+		
+	else
+    	echo "wrong option"
+    fi
+
+else
+    echo $*
+    echo "you must give exactly one parameter:"
+    echo "nrm.server option[start, restart, stop, backup]"
+    echo "  e.g. ./nrm.server restart"
+    exit 1234;
+fi
+

@@ -1,0 +1,45 @@
+#!/bin/sh
+
+NRM_HOME=/home/asim/nrm
+APACHE_HOME=/home/asim/nrm/apache
+
+################# DO NOT MODIFY BELOW THIS LINE #######################
+# unless you know what you are doing
+export NRM_HOME
+
+ARGV="$@"
+for ARG in $@
+do
+case $ARG in
+start)
+    echo "START"
+    $NRM_HOME/nrm.server start
+    sleep 10
+	;;
+restart)
+    echo "RESTART"
+    $NRM_HOME/nrm.server restart
+    sleep 10
+    ;;
+stop)
+    echo Attempt to terminate process running NRM
+    $NRM_HOME/nrm.server stop
+	sleep 2
+    ;;
+check)
+    echo Checking process running nrm
+    dlist=`ps -afe | grep $APACHE_HOME | grep httpd | awk "/apache/ && ! /awk/ {print \\$2}"`
+    for p in $dlist ; do
+    echo -n $p ' ... '
+    done
+    echo " "
+    ;;
+*)
+    echo "WRONG option"
+    exit 131
+    ;;
+esac
+
+done
+
+
